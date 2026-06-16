@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Clock, ChevronRight, ChevronDown, ChevronUp, Check, Calendar as CalendarIcon, List, CheckSquare, Square, Undo, X, Save, StickyNote, Database, ListTodo, Equal, MoreVertical, Copy, GripVertical, CornerDownRight, CornerLeftUp, FileText, Info, Code, LayoutTemplate, HelpCircle, Calculator, ListChecks, Settings, ArrowUp, ArrowDown, ArrowUpDown, AlertTriangle, ArrowRight, MoveLeft, MousePointerClick, ArrowUpCircle, ListTree, Download, Upload, FileDown, FileUp, ShieldAlert, User, Link as LinkIcon, Edit3, ExternalLink, Folder, Search, Eye, EyeOff, Type, Pin, MoreHorizontal, Unlink, ArrowRightCircle, Copy as CopyIcon, CalendarPlus, Repeat, CalendarRange, RotateCw, ListOrdered, RefreshCw, Ban } from 'lucide-react';
 import { DAY_NAMES_SHORT, formatDateCZ, getDateStr, getDayName, getISOWeek, getTodayStr } from './utils/dateUtils';
 import { defaultEvents } from './data/mockEvents';
+import { loadEvents, loadFromStorage, loadNotes, saveEvents, saveNotes, saveToStorage, STORAGE_KEYS } from './services/storageService';
+import { defaultSharedNotes } from './data/mockNotes';
 
 // --- DATA A KONFIGURACE ---
 
@@ -741,47 +743,37 @@ export default function KalendarApp() {
         setSectionState(prev => ({ ...prev, [section]: !prev[section] }));
     };
 
-    const [showStats, setShowStats] = useState(() => {
-        try {
-            const saved = localStorage.getItem('calendarAppV8_ShowStats');
-            return saved !== null ? JSON.parse(saved) : true;
-        } catch (e) {
-            return true;
-        }
-    });
+    const [showStats, setShowStats] = useState(() =>
+        loadFromStorage(STORAGE_KEYS.showStats, true)
+    );
 
     useEffect(() => {
-        localStorage.setItem('calendarAppV8_ShowStats', JSON.stringify(showStats));
+        saveToStorage(STORAGE_KEYS.showStats, showStats);
     }, [showStats]);
 
-    const [listSortSettings, setListSortSettings] = useState(() => {
-        try {
-            const savedStr = localStorage.getItem('calendarAppV8_ListSort');
-            if (savedStr) {
-                const saved = JSON.parse(savedStr);
-                if (typeof saved.noDate === 'string') {
-                    return {
-                        noDate: { group: 'act_note', actSort: 'custom', noteSort: 'custom' },
-                        withDate: { group: 'act_note', actSort: 'dateAsc', noteSort: 'custom' },
-                        hidden: { group: 'act_note', actSort: 'dateAsc', noteSort: 'custom' }
-                    };
-                }
-                return saved;
-            }
-        } catch (e) { console.error(e); }
+    const defaultListSortSettings = {
+        noDate: { group: 'act_note', actSort: 'custom', noteSort: 'custom' },
+        withDate: { group: 'act_note', actSort: 'dateAsc', noteSort: 'custom' },
+        hidden: { group: 'act_note', actSort: 'dateAsc', noteSort: 'custom' }
+    };
 
-        return {
-            noDate: { group: 'act_note', actSort: 'custom', noteSort: 'custom' },
-            withDate: { group: 'act_note', actSort: 'dateAsc', noteSort: 'custom' },
-            hidden: { group: 'act_note', actSort: 'dateAsc', noteSort: 'custom' }
-        };
+    const [listSortSettings, setListSortSettings] = useState(() => {
+        const saved = loadFromStorage(STORAGE_KEYS.listSort, defaultListSortSettings);
+
+        if (typeof saved.noDate === 'string') {
+            return defaultListSortSettings;
+        }
+
+        return saved;
     });
 
     useEffect(() => {
-        localStorage.setItem('calendarAppV8_ListSort', JSON.stringify(listSortSettings));
+        saveToStorage(STORAGE_KEYS.listSort, listSortSettings);
     }, [listSortSettings]);
 
-    const [sharedNotes, setSharedNotes] = useState({});
+    const [sharedNotes, setSharedNotes] = useState(() =>
+        loadNotes()
+    );
     const [isNotePickerOpen, setIsNotePickerOpen] = useState(false);
     const [targetItemIdForNote, setTargetItemIdForNote] = useState(null);
     const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
@@ -1203,7 +1195,9 @@ export default function KalendarApp() {
 
     const formatDate = (d) => d ? d.replace(/-/g, '.') : "";
 
-    const [events, setEvents] = useState(defaultEvents);
+    const [events, setEvents] = useState(() =>
+        loadEvents()
+    );
     const [newEventTitle, setNewEventTitle] = useState("");
     const [addingToDate, setAddingToDate] = useState(null);
 
@@ -1267,11 +1261,11 @@ export default function KalendarApp() {
     }, []);
 
     useEffect(() => {
-        localStorage.setItem('calendarAppV8_Demo_v7', JSON.stringify(events));
+        saveEvents(events);
     }, [events]);
 
     useEffect(() => {
-        localStorage.setItem('calendarAppV8_Notes_v7', JSON.stringify(sharedNotes));
+        saveNotes(sharedNotes);
     }, [sharedNotes]);
 
     useEffect(() => {
