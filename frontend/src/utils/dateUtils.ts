@@ -1,5 +1,3 @@
-import { DateString } from "../../../shared/types/calendar";
-
 export const DAY_NAMES = [
     "Neděle",
     "Pondělí",
