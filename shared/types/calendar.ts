@@ -27,10 +27,13 @@ export interface BaseCalendarItem {
 }
 
 export interface EventItem extends BaseCalendarItem {
-    type: "event" | "task";
+    type: "event";
     activityType?: ActivityType;
 }
 
+export interface TaskItem extends BaseCalendarItem {
+    type: "task";
+}
 export interface ProjectItem extends BaseCalendarItem {
     type: "project";
 }
@@ -103,5 +106,6 @@ export type RecurringEventItem = EventItem & RecurringFields;
 
 export type CalendarItem =
     | EventItem
+    | TaskItem
     | ProjectItem
     | RecurringEventItem;

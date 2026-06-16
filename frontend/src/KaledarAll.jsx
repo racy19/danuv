@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Clock, ChevronRight, ChevronDown, ChevronUp, Check, Calendar as CalendarIcon, List, CheckSquare, Square, Undo, X, Save, StickyNote, Database, ListTodo, Equal, MoreVertical, Copy, GripVertical, CornerDownRight, CornerLeftUp, FileText, Info, Code, LayoutTemplate, HelpCircle, Calculator, ListChecks, Settings, ArrowUp, ArrowDown, ArrowUpDown, AlertTriangle, ArrowRight, MoveLeft, MousePointerClick, ArrowUpCircle, ListTree, Download, Upload, FileDown, FileUp, ShieldAlert, User, Link as LinkIcon, Edit3, ExternalLink, Folder, Search, Eye, EyeOff, Type, Pin, MoreHorizontal, Unlink, ArrowRightCircle, Copy as CopyIcon, CalendarPlus, Repeat, CalendarRange, RotateCw, ListOrdered, RefreshCw, Ban } from 'lucide-react';
+import { DAY_NAMES_SHORT, formatDateCZ, getDateStr, getDayName, getISOWeek, getTodayStr } from './utils/dateUtils';
+import { defaultEvents } from './data/mockEvents';
 
 // --- DATA A KONFIGURACE ---
-const DAY_NAMES = ["Neděle", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota"];
-const DAY_NAMES_SHORT = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
 
 // NOVÉ MOŽNOSTI ŘAZENÍ (GRANULÁRNÍ)
 const GROUP_ORDER_OPTIONS = [
@@ -21,14 +21,6 @@ const INTERNAL_SORT_OPTIONS = [
 ];
 
 // --- HELPERY (GLOBAL SCOPE) ---
-
-const getISOWeek = (date) => {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-};
 
 const getListSortFn = (method) => {
     return (a, b) => {
@@ -1208,16 +1200,6 @@ export default function KalendarApp() {
 
     const dragItem = useRef(null);
     const dragOverItem = useRef(null);
-
-    const getTodayStr = () => getDateStr(new Date());
-
-    const getDayName = (dateStr) => {
-        if (!dateStr) return "";
-        const parts = dateStr.split('-');
-        const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-        if (isNaN(date.getTime())) return "";
-        return DAY_NAMES_SHORT[date.getDay()];
-    };
 
     const formatDate = (d) => d ? d.replace(/-/g, '.') : "";
 
@@ -4064,12 +4046,6 @@ export default function KalendarApp() {
 
                     const isRecurring = activeActivityType === 'recurring';
                     const isMultiRecurring = activeActivityType === 'multi_recurring';
-
-                    const formatDateCZ = (dateStr) => {
-                        if (!dateStr) return "";
-                        const [y, m, d] = dateStr.split('-');
-                        return `${d}.${m}.${y}`;
-                    }
 
                     const sortedInstancesForEditor = [...currentRecurrenceInstances].sort((a, b) => {
                         const dateA = a.date || "";
