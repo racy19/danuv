@@ -34,6 +34,7 @@ export interface EventItem extends BaseCalendarItem {
 export interface TaskItem extends BaseCalendarItem {
     type: "task";
 }
+
 export interface ProjectItem extends BaseCalendarItem {
     type: "project";
 }

@@ -4,81 +4,10 @@ import { DAY_NAMES_SHORT, formatDateCZ, getDateStr, getDayName, getISOWeek, getT
 import { defaultEvents } from './data/mockEvents';
 import { loadEvents, loadFromStorage, loadNotes, saveEvents, saveNotes, saveToStorage, STORAGE_KEYS } from './services/storageService';
 import { defaultSharedNotes } from './data/mockNotes';
+import { GROUP_ORDER_OPTIONS, INTERNAL_SORT_OPTIONS, sortAndGroupItems } from './utils/sortUtils';
 
-// --- DATA A KONFIGURACE ---
-
-// NOVÉ MOŽNOSTI ŘAZENÍ (GRANULÁRNÍ)
-const GROUP_ORDER_OPTIONS = [
-    { value: 'act_note', label: 'Aktivity ➜ Poznámky' },
-    { value: 'note_act', label: 'Poznámky ➜ Aktivity' },
-    { value: 'none', label: 'Žádné (Promíchat)' }
-];
-
-const INTERNAL_SORT_OPTIONS = [
-    { value: 'custom', label: 'Vlastní (Drag & Drop)' },
-    { value: 'az', label: 'Abecedně A-Z' },
-    { value: 'za', label: 'Abecedně Z-A' },
-    { value: 'dateAsc', label: 'Od nejstaršího' },
-    { value: 'dateDesc', label: 'Od nejnovějšího' },
-];
 
 // --- HELPERY (GLOBAL SCOPE) ---
-
-const getListSortFn = (method) => {
-    return (a, b) => {
-        const sortByAlpha = (i1, i2) => (i1.title || "").localeCompare(i2.title || "");
-        const sortByDateAsc = (i1, i2) => {
-            const d1 = i1.start || "9999-99-99";
-            const d2 = i2.start || "9999-99-99";
-            if (d1 !== d2) return d1.localeCompare(d2);
-            return (i1.startTime || "00:00").localeCompare(i2.startTime || "00:00");
-        };
-        const sortByDateDesc = (i1, i2) => {
-            const d1 = i1.start || "0000-00-00";
-            const d2 = i2.start || "0000-00-00";
-            if (d1 !== d2) return d2.localeCompare(d1);
-            return (i2.startTime || "00:00").localeCompare(i1.startTime || "00:00");
-        };
-
-        if (method === 'az') return sortByAlpha(a, b);
-        if (method === 'za') return (b.title || "").localeCompare(a.title || "");
-        if (method === 'dateAsc') return sortByDateAsc(a, b);
-        if (method === 'dateDesc') return sortByDateDesc(a, b);
-
-        return sortByAlpha(a, b);
-    };
-};
-
-const sortAndGroupItems = (items, settings) => {
-    const sortFn = getListSortFn;
-
-    if (!settings) return items; // Fallback
-
-    if (settings.group === 'none') {
-        const sorted = [...items];
-        if (settings.actSort !== 'custom') {
-            sorted.sort(sortFn(settings.actSort));
-        }
-        return sorted;
-    }
-
-    const notes = items.filter(i => i.type === 'note');
-    const acts = items.filter(i => i.type !== 'note');
-
-    if (settings.noteSort !== 'custom') {
-        notes.sort(sortFn(settings.noteSort));
-    }
-    if (settings.actSort !== 'custom') {
-        acts.sort(sortFn(settings.actSort));
-    }
-
-    if (settings.group === 'act_note') {
-        return [...acts, ...notes];
-    } else {
-        return [...notes, ...acts];
-    }
-};
-
 const renderTypeIcon = (type, className) => {
     switch (type) {
         case 'note': return <StickyNote className={className} />;
