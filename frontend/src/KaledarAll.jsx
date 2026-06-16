@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Clock, ChevronRight, ChevronDown, ChevronUp, Check, Calendar as CalendarIcon, List, CheckSquare, Square, Undo, X, Save, StickyNote, Database, ListTodo, Equal, MoreVertical, Copy, GripVertical, CornerDownRight, CornerLeftUp, FileText, Info, Code, LayoutTemplate, HelpCircle, Calculator, ListChecks, Settings, ArrowUp, ArrowDown, ArrowUpDown, AlertTriangle, ArrowRight, MoveLeft, MousePointerClick, ArrowUpCircle, ListTree, Download, Upload, FileDown, FileUp, ShieldAlert, User, Link as LinkIcon, Edit3, ExternalLink, Folder, Search, Eye, EyeOff, Type, Pin, MoreHorizontal, Unlink, ArrowRightCircle, Copy as CopyIcon, CalendarPlus, Repeat, CalendarRange, RotateCw, ListOrdered, RefreshCw, Ban } from 'lucide-react';
+import { Plus, Trash2, Clock, ChevronRight, ChevronDown, ChevronUp, Check, Calendar as CalendarIcon, List, CheckSquare, Square, Undo, X, Save, StickyNote, Database, ListTodo, Equal, MoreVertical, Copy, GripVertical, CornerDownRight, CornerLeftUp, FileText, Info, Code, LayoutTemplate, HelpCircle, Calculator, ListChecks, Settings, ArrowUp, ArrowDown, ArrowUpDown, AlertTriangle, ArrowRight, MoveLeft, MousePointerClick, ArrowUpCircle, ListTree, Download, Upload, FileDown, FileUp, ShieldAlert, User, Link as LinkIcon, Edit3, ExternalLink, Folder, Search, Eye, EyeOff, Type, Pin, MoreHorizontal, Unlink, ArrowRightCircle, Copy as CopyIcon, CalendarPlus, Repeat, CalendarRange, RotateCw, ListOrdered, RefreshCw, Ban, TypeIcon } from 'lucide-react';
 import { DAY_NAMES_SHORT, formatDateCZ, getDateStr, getDayName, getISOWeek, getTodayStr } from './utils/dateUtils';
 import { defaultEvents } from './data/mockEvents';
 import { loadEvents, loadFromStorage, loadNotes, saveEvents, saveNotes, saveToStorage, STORAGE_KEYS } from './services/storageService';
@@ -7,18 +7,10 @@ import { defaultSharedNotes } from './data/mockNotes';
 import { GROUP_ORDER_OPTIONS, INTERNAL_SORT_OPTIONS, sortAndGroupItems } from './utils/sortUtils';
 import { generateRecurrenceInstances } from './utils/recurrenceUtils';
 import { areSetsEqual } from './utils/commonUtils';
+import { AcitvityIcon } from './components/icons/ActivityIcon';
 
 
 // --- HELPERY (GLOBAL SCOPE) ---
-const renderTypeIcon = (type, className) => {
-	switch (type) {
-		case 'note': return <StickyNote className={className} />;
-		case 'task': return <ListTodo className={className} />;
-		case 'project': return <Folder className={className} />;
-		default: return <CalendarIcon className={className} />;
-	}
-};
-
 const CustomSortSelect = ({ value, onChange, options }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const containerRef = useRef(null);
@@ -2995,7 +2987,7 @@ export default function KalendarApp() {
 											</button>
 										)}
 										<span className="w-px h-3 bg-current opacity-20 mx-0.5"></span>
-										{renderTypeIcon(item.type, `w-3 h-3 ${iconClass} shrink-0`)}
+										<AcitvityIcon type={item.type} className={`w-3 h-3 ${iconClass} shrink-0`} />
 										<span
 											onClick={(e) => {
 												e.stopPropagation();
@@ -3120,7 +3112,7 @@ export default function KalendarApp() {
 									</button>
 								)}
 								<span className="w-px h-3 bg-current opacity-20 mx-0.5"></span>
-								{renderTypeIcon(isNote ? 'note' : (item.type || 'event'), `w-3 h-3 ${iconClass} shrink-0`)}
+								<AcitvityIcon type={isNote ? 'note' : (item.type || 'event')} className={`w-3 h-3 ${iconClass} shrink-0`} />
 								<span
 									onClick={(e) => {
 										e.stopPropagation();
@@ -3674,7 +3666,7 @@ export default function KalendarApp() {
 
 											return (
 												<span key={item.id} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border h-auto ${chipClass}`}>
-													{renderTypeIcon(item.type, `w-3 h-3 ${iconClass} shrink-0`)}
+													<AcitvityIcon type={item.type} className={`w-3 h-3 ${iconClass} shrink-0`} />
 													<span className="font-medium whitespace-normal break-words">{item.title}</span>
 													<button onClick={() => handleInlineTaskToggle(item.id, false)} className="ml-1 hover:bg-black/10 rounded p-0.5"><X className="w-3 h-3 opacity-60 hover:opacity-100" /></button>
 												</span>
@@ -4324,7 +4316,7 @@ export default function KalendarApp() {
 												if (item.isSuppressed) {
 													return (
 														<span key={item.id} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border h-auto bg-slate-100 text-slate-500 border-slate-300">
-															{renderTypeIcon(isNote ? 'note' : 'project', "w-3 h-3 text-slate-400 shrink-0")}
+															<AcitvityIcon type={isNote ? 'note' : 'project'} className="w-3 h-3 text-slate-400 shrink-0" />
 															<span className="font-medium whitespace-normal break-words">{item.title}</span>
 															<button onClick={() => handleInlineNoteToggleForActivity(item.id, false)} className="ml-1 hover:bg-black/10 rounded p-0.5"><X className="w-3.5 h-3.5 opacity-60 hover:opacity-100" /></button>
 														</span>
@@ -4335,7 +4327,7 @@ export default function KalendarApp() {
 													<span key={item.id} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border h-auto ${chipClass}`}>
 														<div className="w-3.5 h-3.5 shrink-0"></div>
 														<span className="w-px h-3 bg-current opacity-20 mx-0.5"></span>
-														{renderTypeIcon(isNote ? 'note' : 'project', `w-3 h-3 ${iconClass} shrink-0`)}
+														<AcitvityIcon type={isNote ? 'note' : 'project'} className={`w-3 h-3 ${iconClass} shrink-0`} />
 														<span onClick={(e) => { e.stopPropagation(); if (isNote) handleOpenNoteEditor(item.id); else handleOpenProjectEditor(item.id); }} className="whitespace-normal text-left break-words cursor-pointer hover:bg-black/10 rounded px-1 -mx-1 transition-colors font-medium">{item.title}</span>
 														<button onClick={(e) => { e.stopPropagation(); handleInlineNoteToggleForActivity(item.id, false); }} className="ml-1 hover:bg-black/10 rounded p-0.5 transition-colors" title="Odpojit"><X className="w-3.5 h-3.5 opacity-60 hover:opacity-100" /></button>
 													</span>
