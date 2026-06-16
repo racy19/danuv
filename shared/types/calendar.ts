@@ -8,105 +8,105 @@ export type DateString = string; // YYYY-MM-DD
 export type TimeString = string; // HH:mm
 
 export interface BaseCalendarItem {
-    id: Id;
-    title: string;
-    type: CalendarItemType;
+	id: Id;
+	title: string;
+	type: CalendarItemType;
 
-    completed: boolean;
+	completed: boolean;
 
-    start?: DateString;
-    end?: DateString;
-    startTime?: TimeString;
-    endTime?: TimeString;
+	start?: DateString;
+	end?: DateString;
+	startTime?: TimeString;
+	endTime?: TimeString;
 
-    isPinned?: boolean;
-    isHidden?: boolean;
+	isPinned?: boolean;
+	isHidden?: boolean;
 
-    linkedNoteIds?: Id[];
-    subtasks?: CalendarItem[];
+	linkedNoteIds?: Id[];
+	subtasks?: CalendarItem[];
 }
 
 export interface EventItem extends BaseCalendarItem {
-    type: "event";
-    activityType?: ActivityType;
+	type: "event";
+	activityType?: ActivityType;
 }
 
 export interface TaskItem extends BaseCalendarItem {
-    type: "task";
+	type: "task";
 }
 
 export interface ProjectItem extends BaseCalendarItem {
-    type: "project";
+	type: "project";
 }
 
 export type RecurrencePattern =
-    | "daily"
-    | "weekly"
-    | "monthly"
-    | "yearly"
-    | "custom";
+	| "daily"
+	| "weekly"
+	| "monthly"
+	| "yearly"
+	| "custom";
 
 export type RecurrenceUnit = "day" | "week" | "month" | "year";
 
 export type WeekParity = "odd" | "even";
 
 export interface MultiRecurringDefinition {
-    startTime?: TimeString;
-    endTime?: TimeString;
-    title?: string;
+	startTime?: TimeString;
+	endTime?: TimeString;
+	title?: string;
 }
 
 export interface RecurrenceInstance {
-    id: Id;
+	id: Id;
 
-    date: DateString;
-    originalDate?: DateString;
-    endDate?: DateString;
+	date: DateString;
+	originalDate?: DateString;
+	endDate?: DateString;
 
-    startTime?: TimeString;
-    endTime?: TimeString;
+	startTime?: TimeString;
+	endTime?: TimeString;
 
-    completed: boolean;
+	completed: boolean;
 
-    isGenerated?: boolean;
-    isSuppressed?: boolean;
-    isEdited?: boolean;
-    isHidden?: boolean;
+	isGenerated?: boolean;
+	isSuppressed?: boolean;
+	isEdited?: boolean;
+	isHidden?: boolean;
 
-    customTitle?: string | null;
+	customTitle?: string | null;
 
-    linkedNoteIds?: Id[];
-    subtasks?: CalendarItem[];
+	linkedNoteIds?: Id[];
+	subtasks?: CalendarItem[];
 
-    /**
-     * Temporary helper from the current implementation.
-     * Used for matching multi-recurring generated instances.
-     */
-    _sourceIdx?: number;
+	/**
+	 * Temporary helper from the current implementation.
+	 * Used for matching multi-recurring generated instances.
+	 */
+	_sourceIdx?: number;
 }
 
 export interface RecurringFields {
-    activityType: "recurring" | "multi_recurring";
+	activityType: "recurring" | "multi_recurring";
 
-    intervalStart: DateString;
-    intervalEnd: DateString;
+	intervalStart: DateString;
+	intervalEnd: DateString;
 
-    recurrencePattern: RecurrencePattern;
-    recurrenceInterval?: number;
-    recurrenceUnit?: RecurrenceUnit;
+	recurrencePattern: RecurrencePattern;
+	recurrenceInterval?: number;
+	recurrenceUnit?: RecurrenceUnit;
 
-    recurrenceDays?: number[]; // 0 = Sunday, 1 = Monday...
-    recurrenceWeeks?: WeekParity[];
+	recurrenceDays?: number[]; // 0 = Sunday, 1 = Monday...
+	recurrenceWeeks?: WeekParity[];
 
-    recurrenceInstances?: RecurrenceInstance[];
+	recurrenceInstances?: RecurrenceInstance[];
 
-    multiDefs?: MultiRecurringDefinition[];
+	multiDefs?: MultiRecurringDefinition[];
 }
 
 export type RecurringEventItem = EventItem & RecurringFields;
 
 export type CalendarItem =
-    | EventItem
-    | TaskItem
-    | ProjectItem
-    | RecurringEventItem;
+	| EventItem
+	| TaskItem
+	| ProjectItem
+	| RecurringEventItem;
