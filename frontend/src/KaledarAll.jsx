@@ -8,155 +8,13 @@ import { GROUP_ORDER_OPTIONS, INTERNAL_SORT_OPTIONS, sortAndGroupItems } from '.
 import { generateRecurrenceInstances } from './utils/recurrenceUtils';
 import { areSetsEqual } from './utils/commonUtils';
 import { AcitvityIcon } from './components/icons/ActivityIcon';
+import { AttachedNoteCard } from './components/notes/AttachedNoteCard';
+import { CustomSortSelect } from './components/ui/CustomSortSelect';
 
 
 // --- HELPERY (GLOBAL SCOPE) ---
-const CustomSortSelect = ({ value, onChange, options }) => {
-	const [isOpen, setIsOpen] = useState(false);
-	const containerRef = useRef(null);
-
-	useEffect(() => {
-		const handleClickOutside = (event) => {
-			if (containerRef.current && !containerRef.current.contains(event.target)) {
-				setIsOpen(false);
-			}
-		};
-		document.addEventListener('mousedown', handleClickOutside);
-		return () => document.removeEventListener('mousedown', handleClickOutside);
-	}, []);
-
-	const selectedOption = options.find(o => o.value === value) || options[0];
-
-	return (
-		<div className="relative w-full" ref={containerRef}>
-			<button
-				onClick={() => setIsOpen(!isOpen)}
-				className="w-full bg-slate-50 border border-slate-300 text-slate-700 py-2.5 px-3 rounded flex items-center justify-between hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100 transition-colors text-sm shadow-sm"
-			>
-				<span className="truncate">{selectedOption.label}</span>
-				<ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 ml-2 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-			</button>
-
-			{isOpen && (
-				<div className="absolute z-[100] left-0 top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-xl max-h-[350px] overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
-					{options.map(opt => {
-						const isSelected = value === opt.value;
-						return (
-							<button
-								key={opt.value}
-								onClick={() => { onChange(opt.value); setIsOpen(false); }}
-								className={`w-full px-3 py-2 text-sm text-left flex items-center transition-colors border-b border-slate-50 last:border-0 ${isSelected ? 'bg-teal-50 text-teal-800 font-medium' : 'text-slate-700 hover:bg-slate-50'}`}
-							>
-								<span className="truncate w-full">{opt.label}</span>
-								{isSelected && <Check className="w-3.5 h-3.5 text-teal-600 ml-2 shrink-0" />}
-							</button>
-						);
-					})}
-				</div>
-			)}
-		</div>
-	);
-};
-
-const RecursiveItem = () => { return null; };
-
-const AttachedNoteCard = ({ note, parentId, handlers, isSortEnabled, onNoteClick, onUnlink, onDelete }) => {
-	const [hoverZone, setHoverZone] = useState(null);
-	const isBeingDragged = handlers.draggingNote?.id === note.id && handlers.draggingNote?.parentId === parentId;
-
-	const handleDragStart = (e) => {
-		if (!isSortEnabled) return;
-		handlers.onDragStartNote(e, note.id, parentId);
-	};
-
-	const handleDragOver = (e) => {
-		if (!isSortEnabled || !handlers.draggingNote) return;
-		e.preventDefault();
-		e.stopPropagation();
-
-		if (isBeingDragged) return;
-
-		const rect = e.currentTarget.getBoundingClientRect();
-		const y = e.clientY - rect.top;
-		if (y < rect.height / 2) {
-			if (hoverZone !== 'before') setHoverZone('before');
-		} else {
-			if (hoverZone !== 'after') setHoverZone('after');
-		}
-	};
-
-	const handleDrop = (e) => {
-		if (!isSortEnabled || !handlers.draggingNote) return;
-		e.preventDefault();
-		e.stopPropagation();
-
-		if (!isBeingDragged) {
-			handlers.onDropNoteOnNote(handlers.draggingNote.id, handlers.draggingNote.parentId, parentId, note.id, hoverZone);
-		}
-		setHoverZone(null);
-		handlers.onDragEnd(e);
-	};
-
-	const hasContent = note.type !== 'heading' && note.content && note.content.trim() !== '';
-
-	return (
-		<div
-			className={`flex w-full relative group ${isBeingDragged ? 'opacity-50' : ''}`}
-			draggable={isSortEnabled}
-			onDragStart={handleDragStart}
-			onDragOver={handleDragOver}
-			onDragLeave={(e) => { e.stopPropagation(); setHoverZone(null); }}
-			onDrop={handleDrop}
-			onDragEnd={handlers.onDragEnd}
-		>
-			{hoverZone === 'before' && <div className="absolute -top-1 left-0 right-0 h-1 bg-yellow-500 z-50 rounded-full"></div>}
-			{hoverZone === 'after' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-yellow-500 z-50 rounded-full"></div>}
-
-			<div
-				onClick={(e) => { e.stopPropagation(); onNoteClick(note.id); }}
-				className={`flex-1 flex flex-col border rounded-lg transition-all relative shadow-sm mb-1 cursor-pointer hover:shadow-md ${hoverZone ? 'border-yellow-400 bg-yellow-100' : 'border-yellow-200 bg-yellow-50'}`}
-			>
-				<div className="flex items-start px-2 py-1.5 gap-3 min-h-[36px]">
-					{isSortEnabled && (
-						<div className="cursor-grab active:cursor-grabbing text-yellow-500 hover:text-yellow-700 -ml-1 shrink-0 flex items-center justify-center mt-0.5">
-							<GripVertical className="w-4 h-4" />
-						</div>
-					)}
-					{!isSortEnabled && <div className="w-4 h-4 -ml-1 shrink-0"></div>}
-
-					<div className="flex-1 flex flex-col min-w-0 pt-0.5">
-						<span className="font-bold text-xs break-words leading-tight text-yellow-900">
-							{note.title}
-						</span>
-						{hasContent && (
-							<div className="text-xs text-yellow-800 mt-1 whitespace-pre-wrap leading-relaxed pb-1">
-								{note.content}
-							</div>
-						)}
-					</div>
-
-					<div className="absolute right-2 top-0.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-yellow-50 backdrop-blur-sm p-0.5 rounded border border-yellow-200 shadow-sm z-20">
-						<button
-							onClick={(e) => { e.stopPropagation(); onUnlink(parentId, note.id); }}
-							className="p-1.5 text-slate-400 hover:text-yellow-600 hover:bg-yellow-100 rounded transition-colors"
-							title="Odpojit"
-						>
-							<Unlink className="w-3.5 h-3.5" />
-						</button>
-
-						<button
-							onClick={(e) => { e.stopPropagation(); onDelete(note.id); }}
-							className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-							title="Smazat"
-						>
-							<Trash2 className="w-3.5 h-3.5" />
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-};
+// const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
+// a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
 
 const ListEventCard = ({
 	item,
@@ -3276,17 +3134,19 @@ export default function KalendarApp() {
 							null
 						)
 						: (activeView !== 'projects' && sortedEvents.map((ev) => (
-							<RecursiveItem
-								key={ev.id} item={ev} level={0} parentId={null} activeView={activeView}
-								expandedIds={expandedIds} setExpandedIds={setExpandedIds} editingId={editingId} setEditingId={setEditingId}
-								draggingId={draggingId} justDroppedId={justDroppedId} allEvents={events} findItemAndParent={findItemAndParent}
-								originalEvents={originalEvents} setOriginalEvents={setOriginalEvents} openTypeDropdownId={openTypeDropdownId} setOpenTypeDropdownId={setOpenTypeDropdownId}
-								open ActionMenuId={openActionMenuId} setOpenActionMenuId={setOpenActionMenuId} sortConfig={sortConfig} updateEventField={updateEventField} toggleComplete={toggleComplete} indentItem={indentItem}
-								outdentItem={outdentItem} addSubtask={addSubtask} duplicateEvent={duplicateEvent} deleteEvent={deleteEvent} updateTree={updateTree}
-								handleSaveEdit={handleSaveEdit} handleCancelEdit={handleCancelEdit} handleRequestEdit={handleRequestEdit} onDragStart={onDragStart} onDragEnd={onDragEnd}
-								onMoveBefore={onMoveBefore} onMoveAfter={onMoveAfter} onMoveAsChild={onMoveAsChild} onMoveAsParent={onMoveAsParent} getSortedItems={getSortedItems} getDayName={getDayName} getTodayStr={getTodayStr}
-								sharedNotes={sharedNotes} onOpenNotePicker={handleOpenNotePicker} onOpenNoteEditor={handleOpenNoteEditor} onUnlinkNote={handleUnlinkNote}
-							/>
+							null
+							// co to what the fuck je ??
+							// <RecursiveItem
+							// 	key={ev.id} item={ev} level={0} parentId={null} activeView={activeView}
+							// 	expandedIds={expandedIds} setExpandedIds={setExpandedIds} editingId={editingId} setEditingId={setEditingId}
+							// 	draggingId={draggingId} justDroppedId={justDroppedId} allEvents={events} findItemAndParent={findItemAndParent}
+							// 	originalEvents={originalEvents} setOriginalEvents={setOriginalEvents} openTypeDropdownId={openTypeDropdownId} setOpenTypeDropdownId={setOpenTypeDropdownId}
+							// 	open ActionMenuId={openActionMenuId} setOpenActionMenuId={setOpenActionMenuId} sortConfig={sortConfig} updateEventField={updateEventField} toggleComplete={toggleComplete} indentItem={indentItem}
+							// 	outdentItem={outdentItem} addSubtask={addSubtask} duplicateEvent={duplicateEvent} deleteEvent={deleteEvent} updateTree={updateTree}
+							// 	handleSaveEdit={handleSaveEdit} handleCancelEdit={handleCancelEdit} handleRequestEdit={handleRequestEdit} onDragStart={onDragStart} onDragEnd={onDragEnd}
+							// 	onMoveBefore={onMoveBefore} onMoveAfter={onMoveAfter} onMoveAsChild={onMoveAsChild} onMoveAsParent={onMoveAsParent} getSortedItems={getSortedItems} getDayName={getDayName} getTodayStr={getTodayStr}
+							// 	sharedNotes={sharedNotes} onOpenNotePicker={handleOpenNotePicker} onOpenNoteEditor={handleOpenNoteEditor} onUnlinkNote={handleUnlinkNote}
+							// />
 						)))}
 				</div>
 			</div>
