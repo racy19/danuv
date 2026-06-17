@@ -10,9 +10,11 @@ import { areSetsEqual } from './utils/commonUtils';
 import { AcitvityIcon } from './components/icons/ActivityIcon';
 import { AttachedNoteCard } from './components/notes/AttachedNoteCard';
 import { CustomSortSelect } from './components/ui/CustomSortSelect';
+import { EventStatusBadge } from './components/events/EventStatusBadge';
+import { EventHoverOverlay } from './components/events/EventHoverOverlay';
+import { EventActionBar } from './components/events/EventActionBar';
+import { EventHeader } from './components/events/EventHeader';
 
-
-// --- HELPERY (GLOBAL SCOPE) ---
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
 // a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
 
@@ -200,101 +202,15 @@ const ListEventCard = ({
 					}
 				}}
 			>
-				{hoverZone === 'note_move' && (
-					<div className="absolute left-1/2 top-2 -translate-x-1/2 flex items-center gap-2 pointer-events-none text-sky-800 animate-in fade-in zoom-in-95 duration-200 z-50 bg-white/95 px-3 py-1 rounded shadow-md border border-sky-200 text-xs font-bold uppercase">
-						<ArrowRightCircle className="w-4 h-4" /> <span>Přesunout k aktivitě</span>
-					</div>
-				)}
-				{hoverZone === 'note_link' && (
-					<div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none text-yellow-800 animate-in fade-in zoom-in-95 duration-200 z-50 bg-white/95 px-3 py-1 rounded shadow-md border border-yellow-200 text-xs font-bold uppercase">
-						<LinkIcon className="w-4 h-4" /> <span>Připojit k aktivitě</span>
-					</div>
-				)}
-				{hoverZone === 'note_copy' && (
-					<div className="absolute left-1/2 bottom-2 -translate-x-1/2 flex items-center gap-2 pointer-events-none text-orange-800 animate-in fade-in zoom-in-95 duration-200 z-50 bg-white/95 px-3 py-1 rounded shadow-md border border-orange-200 text-xs font-bold uppercase">
-						<CopyIcon className="w-4 h-4" /> <span>Vytvořit kopii a připojit</span>
-					</div>
-				)}
-				{hoverZone === 'makeParent' && (
-					<div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-purple-700 animate-in fade-in zoom-in-95 duration-200 z-50 bg-white/90 px-2 py-1 rounded shadow-sm border border-purple-200 text-[10px] font-bold uppercase">
-						<CornerLeftUp className="w-3 h-3" />
-						<span>Nadřadit</span>
-					</div>
-				)}
-				{hoverZone === 'indent' && (
-					<div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-green-700 animate-in fade-in zoom-in-95 duration-200 z-50 bg-white/90 px-2 py-1 rounded shadow-sm border border-green-200 text-[10px] font-bold uppercase">
-						<span>Vnořit</span>
-						<CornerDownRight className="w-3 h-3" />
-					</div>
-				)}
+				<EventHoverOverlay hoverZone={hoverZone} />
 
-				<div className="flex items-center px-2 py-1 gap-3 min-h-[36px] group">
-					{isSortEnabled && (
-						<div
-							className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 -ml-1 shrink-0"
-							onClick={(e) => e.stopPropagation()}
-						>
-							<GripVertical className="w-4 h-4" />
-						</div>
-					)}
-
-					<button
-						onClick={(e) => actions.toggleStatus(e, item.id)}
-						className="w-[22px] h-[22px] bg-white border border-blue-200 rounded flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-colors shrink-0"
-					>
-						{item.completed ?
-							<Check className="w-3.5 h-3.5 text-green-600" strokeWidth={3} /> :
-							<X className="w-3.5 h-3.5 text-red-500" strokeWidth={3} />
-						}
-					</button>
-
-					<div className="flex-1 flex flex-row items-center gap-x-2 min-w-0">
-						{item.isInstance && (
-							<Repeat className="w-3 h-3 text-blue-400 shrink-0" />
-						)}
-						{timeLabel && (
-							<div className="w-[300px] shrink-0">
-								<span className={`text-xs font-mono whitespace-nowrap ${isBeingDragged ? 'text-white/80' : 'text-slate-500'}`}>
-									{timeLabel}
-								</span>
-							</div>
-						)}
-						<span className={`font-bold text-xs break-words leading-tight ${isBeingDragged ? 'text-white' : 'text-black'}`}>
-							{item.title}
-						</span>
-					</div>
-
-					<div className="absolute right-2 top-0.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-50 backdrop-blur-sm p-0.5 rounded border border-blue-200 shadow-sm z-20" onClick={(e) => e.stopPropagation()}>
-						<button
-							onClick={(e) => actions.createActivityForActivity(e, item.id)}
-							className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded transition-colors"
-							title="Připojit novou aktivitu (podúkol)"
-						>
-							<CalendarPlus className="w-3.5 h-3.5" />
-						</button>
-						<button
-							onClick={(e) => actions.createNoteForActivity(e, item.id)}
-							className="p-1.5 text-slate-400 hover:text-yellow-600 hover:bg-yellow-100 rounded transition-colors"
-							title="Připojit novou poznámku"
-						>
-							<StickyNote className="w-3.5 h-3.5" />
-						</button>
-						<button
-							onClick={(e) => actions.toggleHide(e, item.id)}
-							className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded transition-colors"
-							title={item.isHidden ? "Zobrazit" : "Skrýt"}
-						>
-							{item.isHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-						</button>
-						<button
-							onClick={(e) => actions.deleteEvent(e, item.id)}
-							className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-							title={item.isGenerated ? "Potlačit výskyt" : "Smazat"}
-						>
-							<Trash2 className="w-3.5 h-3.5" />
-						</button>
-					</div>
-				</div>
+				<EventHeader
+					item={item}
+					timeLabel={timeLabel}
+					isBeingDragged={isBeingDragged}
+					isSortEnabled={isSortEnabled}
+					actions={actions}
+				/>
 
 				{hasChildren && (
 					<div className="px-2 pb-2">
@@ -341,20 +257,10 @@ const ListEventCard = ({
 				)}
 			</div>
 
-			{(isOverdue || (isToday && !isOverdue)) && (
-				<div className="ml-2 flex flex-col justify-start pt-1.5 shrink-0 gap-1">
-					{isOverdue && (
-						<span className="px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-red-600 text-white border border-red-800 shadow-md whitespace-nowrap">
-							Po termínu
-						</span>
-					)}
-					{isToday && !isOverdue && (
-						<span className="px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-blue-600 text-white border border-blue-800 shadow-md whitespace-nowrap">
-							Dnes
-						</span>
-					)}
-				</div>
-			)}
+			<EventStatusBadge
+				isToday={Boolean(isToday)}
+				isOverdue={Boolean(isOverdue)}
+			/>
 		</div>
 	);
 };

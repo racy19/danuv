@@ -1,7 +1,9 @@
-import { GripVertical, Trash2, Unlink } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { useState } from "react";
 
 import type { Id, Note } from "../../../../shared/types";
+import { NoteActions } from "./attachedNoteComponents/NoteActions";
+import { NoteContent } from "./attachedNoteComponents/NoteContent";
 
 type HoverZone = "before" | "after" | null;
 
@@ -112,11 +114,6 @@ export const AttachedNoteCard = ({
         onDelete(note.id);
     };
 
-    const hasContent =
-        note.type !== "heading" &&
-        note.content &&
-        note.content.trim() !== "";
-
     return (
         <div
             className={`flex w-full relative group ${isBeingDragged ? "opacity-50" : ""
@@ -139,8 +136,8 @@ export const AttachedNoteCard = ({
             <div
                 onClick={handleOpenNote}
                 className={`flex-1 flex flex-col border rounded-lg transition-all relative shadow-sm mb-1 cursor-pointer hover:shadow-md ${hoverZone
-                        ? "border-yellow-400 bg-yellow-100"
-                        : "border-yellow-200 bg-yellow-50"
+                    ? "border-yellow-400 bg-yellow-100"
+                    : "border-yellow-200 bg-yellow-50"
                     }`}
             >
                 <div className="flex items-start px-2 py-1.5 gap-3 min-h-[36px]">
@@ -152,37 +149,16 @@ export const AttachedNoteCard = ({
                         <div className="w-4 h-4 -ml-1 shrink-0" />
                     )}
 
-                    <div className="flex-1 flex flex-col min-w-0 pt-0.5">
-                        <span className="font-bold text-xs break-words leading-tight text-yellow-900">
-                            {note.title}
-                        </span>
+                    <NoteContent
+                        title={note.title}
+                        content={note.content}
+                        isHeading={note.type === "heading"}
+                    />
 
-                        {hasContent && (
-                            <div className="text-xs text-yellow-800 mt-1 whitespace-pre-wrap leading-relaxed pb-1">
-                                {note.content}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="absolute right-2 top-0.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-yellow-50 backdrop-blur-sm p-0.5 rounded border border-yellow-200 shadow-sm z-20">
-                        <button
-                            type="button"
-                            onClick={handleUnlink}
-                            className="p-1.5 text-slate-400 hover:text-yellow-600 hover:bg-yellow-100 rounded transition-colors"
-                            title="Odpojit"
-                        >
-                            <Unlink className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={handleDelete}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="Smazat"
-                        >
-                            <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                    </div>
+                    <NoteActions
+                        onUnlink={handleUnlink}
+                        onDelete={handleDelete}
+                    />
                 </div>
             </div>
         </div>
