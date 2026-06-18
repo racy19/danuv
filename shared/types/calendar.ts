@@ -78,6 +78,9 @@ export interface RecurrenceInstance {
 	linkedNoteIds?: Id[];
 	subtasks?: CalendarItem[];
 
+	parentId?: Id;
+	isInstance?: boolean;
+
 	/**
 	 * Temporary helper from the current implementation.
 	 * Used for matching multi-recurring generated instances.
@@ -110,3 +113,9 @@ export type CalendarItem =
 	| TaskItem
 	| ProjectItem
 	| RecurringEventItem;
+
+export type RenderableCalendarItem = CalendarItem & {
+	isInstance?: boolean;
+	parentId?: Id;
+	isGenerated?: boolean;
+};

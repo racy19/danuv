@@ -4,35 +4,14 @@ import { useState } from "react";
 import type { Id, Note } from "../../../../shared/types";
 import { NoteActions } from "./attachedNoteComponents/NoteActions";
 import { NoteContent } from "./attachedNoteComponents/NoteContent";
+import { EventHandlers } from "../events/eventCardTypes";
 
 type HoverZone = "before" | "after" | null;
-
-type DraggingNote = {
-    id: Id;
-    parentId: Id;
-};
-
-type AttachedNoteHandlers = {
-    draggingNote: DraggingNote | null;
-    onDragStartNote: (
-        event: React.DragEvent<HTMLDivElement>,
-        noteId: Id,
-        parentId: Id
-    ) => void;
-    onDropNoteOnNote: (
-        draggedNoteId: Id,
-        draggedParentId: Id,
-        targetParentId: Id,
-        targetNoteId: Id,
-        hoverZone: HoverZone
-    ) => void;
-    onDragEnd: (event: React.DragEvent<HTMLDivElement>) => void;
-};
 
 type AttachedNoteCardProps = {
     note: Note;
     parentId: Id;
-    handlers: AttachedNoteHandlers;
+    handlers: EventHandlers;
     isSortEnabled: boolean;
     onNoteClick: (noteId: Id) => void;
     onUnlink: (parentId: Id, noteId: Id) => void;

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import type { Id } from "../../../../shared/types";
+import { EventActions } from "./eventCardTypes";
 
 type EventActionItem = {
 	id: Id;
@@ -14,24 +15,7 @@ type EventActionItem = {
 	isGenerated?: boolean;
 };
 
-type EventActions = {
-	createActivityForActivity: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		itemId: Id
-	) => void;
-	createNoteForActivity: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		itemId: Id
-	) => void;
-	toggleHide: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		itemId: Id
-	) => void;
-	deleteEvent: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		itemId: Id
-	) => void;
-};
+
 
 type EventActionBarProps = {
 	item: EventActionItem;

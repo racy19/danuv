@@ -29,7 +29,8 @@ export interface ListSortSettings {
  * that exposes these fields.
  */
 type SortableItem = {
-	type: string;
+	sortType?: "note" | "calendar";
+	type?: string;
 	title?: string;
 	start?: string;
 	startTime?: string;
@@ -152,8 +153,8 @@ export const sortAndGroupItems = <T extends SortableItem>(
 		return sortItems(items, settings.actSort);
 	}
 
-	const notes = items.filter((item) => item.type === "note");
-	const activities = items.filter((item) => item.type !== "note");
+	const notes = items.filter((item) => item.sortType === "note");
+	const activities = items.filter((item) => item.sortType !== "note");
 
 	const sortedNotes = sortItems(notes, settings.noteSort);
 	const sortedActivities = sortItems(activities, settings.actSort);
@@ -161,4 +162,30 @@ export const sortAndGroupItems = <T extends SortableItem>(
 	return settings.group === "act_note"
 		? [...sortedActivities, ...sortedNotes]
 		: [...sortedNotes, ...sortedActivities];
+};
+
+// --- Other utilities ---
+
+type SortableItemType = string;
+
+/**
+ * Returns whether drag & drop sorting is enabled for a child item type.
+ */
+export const isCustomSortingEnabled = (
+	itemType: SortableItemType,
+	sortSettings?: ListSortSettings
+): boolean => {
+	if (!sortSettings) {
+		return true;
+	}
+
+	if (sortSettings.group === "none") {
+		return sortSettings.actSort === "custom";
+	}
+
+	if (itemType === "note") {
+		return sortSettings.noteSort === "custom";
+	}
+
+	return sortSettings.actSort === "custom";
 };

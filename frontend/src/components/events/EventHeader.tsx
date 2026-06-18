@@ -2,6 +2,7 @@ import { Check, GripVertical, Repeat, X } from "lucide-react";
 
 import type { Id } from "../../../../shared/types";
 import { EventActionBar } from "./EventActionBar";
+import { EventActions } from "./eventCardTypes";
 
 type EventHeaderItem = {
 	id: Id;
@@ -10,29 +11,6 @@ type EventHeaderItem = {
 	isInstance?: boolean;
 	isHidden?: boolean;
 	isGenerated?: boolean;
-};
-
-type EventActions = {
-	toggleStatus: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		itemId: Id
-	) => void;
-	createActivityForActivity: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		itemId: Id
-	) => void;
-	createNoteForActivity: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		itemId: Id
-	) => void;
-	toggleHide: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		itemId: Id
-	) => void;
-	deleteEvent: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		itemId: Id
-	) => void;
 };
 
 type EventHeaderProps = {
@@ -94,8 +72,8 @@ export const EventHeader = ({
 					<div className="w-[300px] shrink-0">
 						<span
 							className={`text-xs font-mono whitespace-nowrap ${isBeingDragged
-									? "text-white/80"
-									: "text-slate-500"
+								? "text-white/80"
+								: "text-slate-500"
 								}`}
 						>
 							{timeLabel}

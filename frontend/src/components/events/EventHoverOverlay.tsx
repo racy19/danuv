@@ -5,14 +5,7 @@ import {
 	CornerLeftUp,
 	Link as LinkIcon,
 } from "lucide-react";
-
-export type EventHoverZone =
-	| "note_move"
-	| "note_link"
-	| "note_copy"
-	| "makeParent"
-	| "indent"
-	| null;
+import { EventHoverZone } from "./eventCardTypes";
 
 type EventHoverOverlayProps = {
 	hoverZone: EventHoverZone;

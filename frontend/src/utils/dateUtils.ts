@@ -44,7 +44,7 @@ export type CzechDateFormat = "numeric" | "text";
 export type CzechMonthCase = "nominative" | "genitive";
 export type CzechDayNameFormat = "short" | "long";
 
-// --- ISO date formatting ---
+// --- ISO date formatting "YYYY-MM-DD" ---
 
 /**
  * Helper function to format a Date object as a string in "YYYY-MM-DD" format.
@@ -111,6 +111,27 @@ export const formatDateCZ = (
     return `${day}. ${month + 1}. ${year}`;
 };
 
+// --- Format date string in Czech format ---
+
+/**
+ * Helper function to format a date string in "YYYY-MM-DD" format as a Czech date string.
+ * @param dateStr Date string in "YYYY-MM-DD" format.
+ * @param format Format of the output string: "numeric" for "DD. MM. YYYY", "text" for "D. month YYYY".
+ * @returns Formatted date string in Czech format or an empty string if the input is invalid.
+ */
+export const formatDateCZfromISO = (
+    dateStr: string,
+    format: CzechDateFormat = "numeric"
+): string => {
+    const date = parseDateStr(dateStr);
+
+    if (!date) {
+        return "";
+    }
+
+    return formatDateCZ(date, format);
+};
+
 // --- Day name retrieval ---
 
 /**
@@ -118,15 +139,19 @@ export const formatDateCZ = (
  * @param dateStr Date string in "YYYY-MM-DD" format.
  * @returns Czech day name (e.g., "Pondělí" or "Po") or an empty string if the input is invalid.
  */
-export const getDayName = (dateStr: string, format: CzechDayNameFormat = "short"): string => {
-    if (!dateStr) return "";
+export const getDayName = (
+    dateStr: string,
+    format: CzechDayNameFormat = "short"
+): string => {
+    const date = parseDateStr(dateStr);
 
-    const parts = dateStr.split("-");
-    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    if (!date) {
+        return "";
+    }
 
-    if (Number.isNaN(date.getTime())) return "";
-
-    return format === "long" ? DAY_NAMES[date.getDay()] : DAY_NAMES_SHORT[date.getDay()];
+    return format === "long"
+        ? DAY_NAMES[date.getDay()]
+        : DAY_NAMES_SHORT[date.getDay()];
 };
 
 // --- Month name retrieval ---
@@ -157,4 +182,27 @@ export const getRelativeDateStr = (offset: number) => {
     const d = new Date();
     d.setDate(d.getDate() + offset);
     return getDateStr(d);
+};
+
+// --- Date string parsing ---
+
+/**
+ * Helper function to parse a date string in "YYYY-MM-DD" format into a Date object.
+ * @param dateStr Date string in "YYYY-MM-DD" format.
+ * @returns Date object or null if the input is invalid.
+ */
+export const parseDateStr = (dateStr: string): Date | null => {
+    const [year, month, day] = dateStr.split("-").map(Number);
+
+    if (!year || !month || !day) {
+        return null;
+    }
+
+    const date = new Date(year, month - 1, day);
+
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    return date;
 };
