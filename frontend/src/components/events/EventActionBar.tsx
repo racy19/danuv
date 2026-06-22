@@ -15,8 +15,6 @@ type EventActionItem = {
 	isGenerated?: boolean;
 };
 
-
-
 type EventActionBarProps = {
 	item: EventActionItem;
 	actions: EventActions;
