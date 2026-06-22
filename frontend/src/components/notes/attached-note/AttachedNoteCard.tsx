@@ -1,10 +1,10 @@
 import { GripVertical } from "lucide-react";
 import { useState } from "react";
 
-import type { Id, Note } from "../../../../shared/types";
-import { NoteActions } from "./attachedNoteComponents/NoteActions";
-import { NoteContent } from "./attachedNoteComponents/NoteContent";
-import { EventHandlers } from "../events/eventCardTypes";
+import type { Id, Note } from "../../../../../shared/types";
+import { NoteActions } from "./NoteActions";
+import { NoteContent } from "./NoteContent";
+import { EventHandlers } from "../../events/eventCardTypes";
 
 type HoverZone = "before" | "after" | null;
 

@@ -19,6 +19,12 @@ import { getEventCardClassName } from './utils/eventCardUtils';
 import { ListEventCard } from './components/events/ListEventCard';
 import { getLinkedNoteTargets, getNoteLinkSearchResults, hasNoteEditorChanges } from './utils/noteEditorUtils';
 import { Modal } from './components/ui/Modal';
+import { NoteEditorHeader } from './components/notes/note-editor/NoteEditorHeader';
+import { NoteTitleInput } from './components/notes/note-editor/NoteTitleInput';
+import { NoteContentInput } from './components/notes/note-editor/NoteContentInput';
+import { NoteLinkedItems } from './components/notes/note-editor/NoteLinkedItems';
+import { NoteLinkSearch } from './components/notes/note-editor/NoteLinkSearch';
+import { NoteEditorModal } from './components/notes/note-editor/NoteEditorModal';
 
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
 // a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
@@ -3151,82 +3157,38 @@ export default function KalendarApp() {
 					);
 
 					return (
-						<Modal
+						<NoteEditorModal
 							isOpen={isNoteEditorOpen && Boolean(activeNoteId)}
+							zIndexStyle={{ zIndex: editorZIndices.note }}
+
+							noteType={activeNoteType}
+							title={activeNoteTitle}
+							content={activeNoteContent}
+
+							hasChanges={hasNoteChanges}
+
+							linkedItems={noteLinksArr}
+							searchResults={searchResults}
+							linkedIds={tempNoteLinks}
+
+							isLinkDropdownOpen={isLinkDropdownOpen}
+							linkSearchQuery={linkSearchQuery}
+
+							noteTitleRef={noteTitleRef}
+							linkDropdownRef={linkDropdownRef}
+
 							onClose={() => setIsNoteEditorOpen(false)}
-							className="bg-yellow-50 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] h-auto border border-yellow-200 relative transition-all duration-300"
-							overlayClassName="bg-black/60 backdrop-blur-sm p-4 animate-in fade-in"
-							style={{ zIndex: editorZIndices.note }}
-						><div className="bg-transparent px-4 py-3 border-b border-yellow-200 flex items-center gap-3 shrink-0">
-								<StickyNote className="w-5 h-5 text-yellow-600 shrink-0" />
-								<div className="flex-1">
-									<select value={activeNoteType} onChange={(e) => setActiveNoteType(e.target.value)} className="bg-transparent text-sm font-bold text-yellow-900 focus:outline-none cursor-pointer">
-										<option value="text">Standardní poznámka</option>
-										<option value="heading">Nadpis (bez obsahu)</option>
-									</select>
-								</div>
-								<div className="w-9 h-9 flex items-center justify-center shrink-0">
-									{hasNoteChanges && (
-										<button onClick={handleSaveNoteContent} className="w-full h-full bg-white border border-yellow-200 hover:bg-yellow-100 text-yellow-700 rounded-full transition-colors shadow-sm flex items-center justify-center animate-in fade-in zoom-in-95 duration-200"><Save className="w-5 h-5" /></button>
-									)}
-								</div>
-								<button onClick={() => setIsNoteEditorOpen(false)} className="w-9 h-9 flex items-center justify-center bg-white/50 hover:bg-red-100 text-yellow-700 hover:text-red-600 rounded-full transition-colors shrink-0"><X className="w-5 h-5" /></button>
-							</div>
+							onSave={handleSaveNoteContent}
 
-							<div className="bg-transparent px-4 pt-4 pb-4 shrink-0 border-b border-yellow-200 flex items-start gap-3">
-								<textarea ref={noteTitleRef} rows={1} value={activeNoteTitle} onChange={(e) => setActiveNoteTitle(e.target.value)} onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight + 2) + 'px'; }} className="font-bold text-xl bg-transparent border-transparent focus:border-yellow-300 rounded px-2 py-1 focus:outline-none w-full text-yellow-900 placeholder:text-yellow-700/50 resize-none overflow-hidden" placeholder="Název poznámky..." style={{ minHeight: '2.5rem' }} />
-							</div>
+							onNoteTypeChange={setActiveNoteType}
+							onTitleChange={setActiveNoteTitle}
+							onContentChange={setActiveNoteContent}
 
-							{activeNoteType !== 'heading' && (
-								<div className="flex-1 overflow-y-auto p-4 bg-white/50 min-h-[200px]">
-									<textarea value={activeNoteContent} onChange={(e) => setActiveNoteContent(e.target.value)} className="w-full h-full min-h-[150px] bg-transparent border-none focus:outline-none text-slate-800 placeholder:text-slate-400 resize-none" placeholder="Sem napište text poznámky..." />
-								</div>
-							)}
-
-							<div className="bg-yellow-100/50 p-3 border-t border-yellow-200 flex flex-col gap-2 shrink-0">
-								<div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto">
-									{noteLinksArr.map((item) => {
-										let chipClass = item.type === 'project' ? 'bg-purple-50 text-purple-900 border-purple-200' : 'bg-blue-50 text-blue-900 border-blue-200';
-										let iconClass = item.type === 'project' ? 'text-purple-600' : 'text-blue-600';
-
-										if (item.isSuppressed) {
-											chipClass = 'bg-slate-100 text-slate-500 border-slate-300';
-											iconClass = 'text-slate-400';
-										}
-
-										return (
-											<span key={item.id} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border h-auto ${chipClass}`}>
-												<AcitvityIcon type={item.type} className={`w-3 h-3 ${iconClass} shrink-0`} />
-												<span className="font-medium whitespace-normal break-words">{item.title}</span>
-												<button onClick={() => handleInlineTaskToggle(item.id, false)} className="ml-1 hover:bg-black/10 rounded p-0.5"><X className="w-3 h-3 opacity-60 hover:opacity-100" /></button>
-											</span>
-										);
-									})}
-								</div>
-								<div className="relative" ref={linkDropdownRef}>
-									<div className="relative">
-										<Search className="w-3.5 h-3.5 text-yellow-600/50 absolute left-3 top-1/2 -translate-y-1/2" />
-										<input type="text" placeholder="Připojit k aktivitě nebo projektu..." value={linkSearchQuery} onFocus={() => setIsLinkDropdownOpen(true)} onChange={(e) => { setLinkSearchQuery(e.target.value); setIsLinkDropdownOpen(true); }} className="w-full bg-white border border-yellow-300 pl-9 pr-8 py-2 text-sm text-yellow-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400/50 shadow-sm transition-all" />
-									</div>
-									{isLinkDropdownOpen && (
-										<div className="absolute bottom-full mb-1 left-0 right-0 bg-white border border-yellow-300 rounded-lg max-h-60 flex flex-col shadow-xl z-50 overflow-hidden">
-											<div className="overflow-y-auto p-1">
-												{searchResults.map(item => {
-													const isLinked = tempNoteLinks.has(item.id);
-													return (
-														<button key={item.id} onClick={() => handleInlineTaskToggle(item.id, !isLinked)} className="w-full text-left py-1.5 px-2 border-b last:border-0 flex items-start gap-2 hover:bg-yellow-50 group rounded">
-															<div className={`w-4 h-4 flex items-center justify-center rounded border transition-colors shrink-0 mt-0.5 ${isLinked ? 'bg-yellow-500 border-yellow-500 text-white' : 'bg-white border-slate-300 text-transparent'}`}><Check className="w-3 h-3" /></div>
-															<span className="flex-1 text-xs text-yellow-900 font-medium">{item.title}</span>
-														</button>
-													)
-												})}
-												{searchResults.length === 0 && <div className="p-4 text-center text-xs text-yellow-700/50 italic">Žádné výsledky...</div>}
-											</div>
-										</div>
-									)}
-								</div>
-							</div>
-						</Modal>
+							onUnlinkItem={(itemId) => handleInlineTaskToggle(itemId, false)}
+							onLinkSearchQueryChange={setLinkSearchQuery}
+							onOpenLinkDropdown={() => setIsLinkDropdownOpen(true)}
+							onToggleLink={handleInlineTaskToggle}
+						/>
 					);
 				})()}
 

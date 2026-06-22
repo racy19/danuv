@@ -113,10 +113,3 @@ export type CalendarItem =
 	| TaskItem
 	| ProjectItem
 	| RecurringEventItem;
-
-export type RenderableCalendarItem = CalendarItem & {
-	isInstance?: boolean;
-	parentId?: Id;
-	isGenerated?: boolean;
-	isSuppressed?: boolean;
-};

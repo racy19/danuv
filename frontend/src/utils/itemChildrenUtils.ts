@@ -1,8 +1,7 @@
 import type { CalendarItem, Id, Note } from "../../../shared/types";
+import { SharedNotesMap } from "../types/renderType";
 import type { ListSortSettings } from "./sortUtils";
 import { sortAndGroupItems } from "./sortUtils";
-
-type SharedNotesMap = Record<Id, Note>;
 
 type ItemWithChildren = CalendarItem & {
 	linkedNoteIds?: Id[];
