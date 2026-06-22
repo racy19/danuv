@@ -25,6 +25,7 @@ import { NoteContentInput } from './components/notes/note-editor/NoteContentInpu
 import { NoteLinkedItems } from './components/notes/note-editor/NoteLinkedItems';
 import { NoteLinkSearch } from './components/notes/note-editor/NoteLinkSearch';
 import { NoteEditorModal } from './components/notes/note-editor/NoteEditorModal';
+import { NotePickerModal } from './components/notes/NotePickerModal';
 
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
 // a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
@@ -3114,21 +3115,13 @@ export default function KalendarApp() {
 					</div>
 				)}
 
-				{isNotePickerOpen && (
-					<div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
-						<div className="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden">
-							<div className="bg-slate-50 p-3 border-b flex justify-between items-center"><h3 className="font-bold text-slate-800">Vyberte poznámku</h3><button onClick={() => setIsNotePickerOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button></div>
-							<div className="max-h-[300px] overflow-y-auto p-2 space-y-1">
-								<button onClick={handleCreateAndLinkNote} className="w-full text-left p-3 hover:bg-blue-50 rounded border border-dashed border-blue-200 text-blue-600 font-medium flex items-center gap-2"><Plus className="w-4 h-4" /> Vytvořit novou poznámku</button>
-								{Object.values(sharedNotes).map(note => (
-									<button key={note.id} onClick={() => handleLinkNote(note.id)} className="w-full text-left p-3 hover:bg-slate-50 rounded border border-slate-100 text-slate-700 flex items-center gap-3 group">
-										<StickyNote className="w-4 h-4 text-yellow-500" /><span className="font-medium truncate flex-1">{note.title}</span><Plus className="w-4 h-4 text-slate-300 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all" />
-									</button>
-								))}
-							</div>
-						</div>
-					</div>
-				)}
+				<NotePickerModal
+					isOpen={isNotePickerOpen}
+					notes={Object.values(sharedNotes)}
+					onClose={() => setIsNotePickerOpen(false)}
+					onCreateAndLinkNote={handleCreateAndLinkNote}
+					onLinkNote={handleLinkNote}
+				/>
 
 				{/* EDITOR POZNÁMKY (Obnovený) */}
 				{isNoteEditorOpen && activeNoteId && (() => {
