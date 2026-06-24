@@ -1,6 +1,6 @@
 import { Check, GripVertical, Repeat, X } from "lucide-react";
 
-import type { Id } from "../../../../shared/types";
+import type { Id } from "../../../../../shared/types";
 import { EventActionBar } from "./EventActionBar";
 import { EventActions } from "./eventCardTypes";
 

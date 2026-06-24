@@ -9,14 +9,13 @@ import { generateRecurrenceInstances } from './utils/recurrenceUtils';
 import { areSetsEqual } from './utils/commonUtils';
 import { AcitvityIcon } from './components/icons/ActivityIcon';
 import { CustomSortSelect } from './components/ui/CustomSortSelect';
-import { EventStatusBadge } from './components/events/EventStatusBadge';
-import { EventHoverOverlay } from './components/events/EventHoverOverlay';
-import { EventActionBar } from './components/events/EventActionBar';
-import { EventHeader } from './components/events/EventHeader';
+import { EventStatusBadge } from './components/events/event-card/EventStatusBadge';
+import { EventHoverOverlay } from './components/events/event-card/EventHoverOverlay';
+import { EventHeader } from './components/events/event-card/EventHeader';
 import { getEventDisplayInfo } from './utils/eventDisplayUtils';
 import { getSortedChildren } from './utils/itemChildrenUtils';
 import { getEventCardClassName } from './utils/eventCardUtils';
-import { ListEventCard } from './components/events/ListEventCard';
+import { ListEventCard } from './components/events/event-card/ListEventCard';
 import { getLinkedNoteTargets, getNoteLinkSearchResults, hasNoteEditorChanges } from './utils/noteEditorUtils';
 import { Modal } from './components/ui/Modal';
 import { NoteEditorHeader } from './components/notes/note-editor/NoteEditorHeader';
@@ -26,6 +25,9 @@ import { NoteLinkedItems } from './components/notes/note-editor/NoteLinkedItems'
 import { NoteLinkSearch } from './components/notes/note-editor/NoteLinkSearch';
 import { NoteEditorModal } from './components/notes/note-editor/NoteEditorModal';
 import { NotePickerModal } from './components/notes/NotePickerModal';
+import { ActivityEditorHeader } from './components/events/activity-editor/ActivityEditorHeader';
+import { ActivityEditorBasicFields } from './components/events/activity-editor/ActivityEditorBasicFields';
+import { ActivityAttachments } from './components/events/activity-editor/ActivityAttachments';
 
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
 // a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
@@ -3335,109 +3337,27 @@ export default function KalendarApp() {
 					return (
 						<div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" style={{ zIndex: editorZIndices.activity }}>
 							<div ref={activityEditorRef} className="bg-blue-50 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] h-auto border border-blue-200 relative transition-all duration-300">
-								<div className="bg-transparent px-4 py-3 border-b border-blue-200 flex items-center gap-3 shrink-0">
-									<CalendarIcon className="w-5 h-5 text-blue-600 shrink-0" />
-									<div className="relative group flex-1">
-										<select
-											value={activeActivityType}
-											onChange={(e) => {
-												const val = e.target.value;
-												setActiveActivityType(val);
-												if (val === 'multi_recurring' && activeActivityMultiDefs.length === 0) {
-													setActiveActivityMultiDefs([{ startTime: "", endTime: "", title: "" }]);
-												}
-											}}
-											className="w-full appearance-none bg-white border border-blue-300 pl-4 pr-10 py-2 text-sm font-bold text-blue-900 tracking-wide hover:border-blue-400 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm transition-all"
-										>
-											<option value="single">● Jednorázová aktivita</option>
-											<option value="recurring">↻ Opakující se aktivita V1</option>
-											<option value="multi_recurring">☰ Skupina více opakujících se aktivit</option>
-										</select>
-										<ChevronDown className="w-4 h-4 text-blue-600 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-									</div>
+								<ActivityEditorHeader
+									activityType={activeActivityType}
+									multiDefs={activeActivityMultiDefs}
+									hasChanges={hasChanges}
+									onActivityTypeChange={setActiveActivityType}
+									onMultiDefsChange={setActiveActivityMultiDefs}
+									onSave={handleSaveActivity}
+									onClose={() => setIsActivityEditorOpen(false)}
+								/>
 
-									<div className="w-9 h-9 flex items-center justify-center shrink-0">
-										{hasChanges && (
-											<button onClick={handleSaveActivity} className="w-full h-full bg-white border border-blue-200 hover:bg-blue-50 text-blue-600 rounded-full transition-colors shadow-sm flex items-center justify-center animate-in fade-in zoom-in-95 duration-200"><Save className="w-5 h-5" /></button>
-										)}
-									</div>
-									<button onClick={() => setIsActivityEditorOpen(false)} className="w-9 h-9 flex items-center justify-center bg-white/50 hover:bg-red-100 text-blue-700 hover:text-red-600 rounded-full transition-colors shrink-0"><X className="w-5 h-5" /></button>
-								</div>
-
-								<div className="bg-transparent px-4 pt-4 pb-4 shrink-0 border-b border-blue-200 flex items-start gap-3">
-									{!isRecurring && !isMultiRecurring && (
-										<button
-											onClick={() => setActiveActivityCompleted(!activeActivityCompleted)}
-											className={`mt-1 w-9 h-9 bg-white border border-blue-200 rounded-lg flex items-center justify-center transition-colors shrink-0 hover:bg-blue-50`}
-										>
-											{activeActivityCompleted ?
-												<Check className="w-6 h-6 text-green-600" strokeWidth={3} /> :
-												<X className="w-3 h-3 text-red-500" strokeWidth={3} />
-											}
-										</button>
-									)}
-									<div className="flex-1 flex items-center gap-2">
-										{isMultiRecurring ? (
-											<div className="flex flex-col w-full gap-1">
-												<label className="text-[10px] font-bold text-blue-800 uppercase tracking-wide pl-0.5">Název skupiny aktivit</label>
-												<input
-													type="text"
-													value={activeActivityTitle}
-													onChange={(e) => setActiveActivityTitle(e.target.value)}
-													className={`font-bold text-sm border focus:border-blue-400 rounded px-3 py-1.5 focus:outline-none w-full text-slate-800 placeholder:text-slate-400 shadow-sm h-[34px] transition-colors ${!activeActivityTitle?.trim() ? 'bg-red-50 border-red-300' : 'bg-white border-blue-200'}`}
-													placeholder="Název skupiny aktivit..."
-												/>
-											</div>
-										) : (
-											<textarea
-												ref={activityTitleRef}
-												rows={1}
-												value={activeActivityTitle}
-												onChange={(e) => setActiveActivityTitle(e.target.value)}
-												onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight + 2) + 'px'; }}
-												className="font-bold text-xl bg-white border border-transparent focus:border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-0 w-full text-slate-800 placeholder:text-slate-400 shadow-sm resize-none overflow-hidden"
-												placeholder="Název aktivity..."
-												style={{ minHeight: '2.5rem' }}
-											/>
-										)}
-										{isRecurring && (
-											<div className="relative shrink-0" ref={nameHelpRef}>
-												<button
-													onClick={(e) => { e.stopPropagation(); setShowNameHelp(!showNameHelp); }}
-													className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
-													title="Nápověda ke kódům v názvu"
-												>
-													<Info className="w-5 h-5" />
-												</button>
-												{showNameHelp && (
-													<div className="absolute right-0 top-full mt-2 w-64 bg-slate-800 text-white p-3 rounded-lg shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 text-xs leading-relaxed border border-slate-700">
-														<div className="font-bold mb-2 text-blue-300 border-b border-slate-700 pb-1 flex items-center gap-1.5">
-															<HelpCircle className="w-3.5 h-3.5" /> Automatické číslování
-														</div>
-														<p className="mb-2">V názvu můžete použít tyto kódy pro automatické doplnění čísel:</p>
-														<ul className="space-y-2">
-															<li>
-																<code className="bg-slate-700 px-1 rounded text-yellow-400 font-bold">{"<d>"}</code>
-																<span className="ml-1">— Aktuální pořadové číslo dne (nezapočítává potlačené).</span>
-															</li>
-															<li>
-																<code className="bg-slate-700 px-1 rounded text-yellow-400 font-bold">{"<s>"}</code>
-																<span className="ml-1">— Celkový počet naplánovaných dní (nezapočítává potlačené).</span>
-															</li>
-															<li>
-																<code className="bg-slate-700 px-1 rounded text-yellow-400 font-bold">{"<n>"}</code>
-																<span className="ml-1">— Název skupiny / hlavní aktivity.</span>
-															</li>
-														</ul>
-														<div className="mt-2 pt-2 border-t border-slate-700 text-[10px] text-slate-400 italic">
-															Příklad: „{"<n>"} - Trénink {"<d>"} / {"<s>"}“ se zobrazí jako „Moje skupina - Trénink 1 / 10“.
-														</div>
-													</div>
-												)}
-											</div>
-										)}
-									</div>
-								</div>
+								<ActivityEditorBasicFields
+									activityType={activeActivityType}
+									title={activeActivityTitle}
+									completed={activeActivityCompleted}
+									showNameHelp={showNameHelp}
+									nameHelpRef={nameHelpRef}
+									titleRef={activityTitleRef}
+									onTitleChange={setActiveActivityTitle}
+									onCompletedChange={setActiveActivityCompleted}
+									onShowNameHelpChange={setShowNameHelp}
+								/>
 
 								{(isRecurring || isMultiRecurring) ? (
 									<div className="animate-in fade-in slide-in-from-top-2 border-b border-blue-200 bg-blue-50/50 p-0 overflow-y-auto overflow-x-hidden w-full">
@@ -3789,68 +3709,20 @@ export default function KalendarApp() {
 									</div>
 								)}
 
-								{activeActivityType === 'single' && (
-									<div className="bg-transparent p-3 border-t border-blue-200 flex flex-col gap-2 shrink-0 relative z-20">
-										<div className="flex flex-wrap gap-1.5 mb-2 max-h-[100px] overflow-y-auto">
-											{allAttachments.map((item) => {
-												const isNote = item._type === 'note';
-												const chipClass = isNote ? "bg-yellow-50 text-yellow-800 border-yellow-200" : "bg-purple-50 text-purple-900 border-purple-200";
-												const iconClass = isNote ? "text-yellow-600" : "text-purple-600";
-
-												if (item.isSuppressed) {
-													return (
-														<span key={item.id} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border h-auto bg-slate-100 text-slate-500 border-slate-300">
-															<AcitvityIcon type={isNote ? 'note' : 'project'} className="w-3 h-3 text-slate-400 shrink-0" />
-															<span className="font-medium whitespace-normal break-words">{item.title}</span>
-															<button onClick={() => handleInlineNoteToggleForActivity(item.id, false)} className="ml-1 hover:bg-black/10 rounded p-0.5"><X className="w-3.5 h-3.5 opacity-60 hover:opacity-100" /></button>
-														</span>
-													);
-												}
-
-												return (
-													<span key={item.id} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border h-auto ${chipClass}`}>
-														<div className="w-3.5 h-3.5 shrink-0"></div>
-														<span className="w-px h-3 bg-current opacity-20 mx-0.5"></span>
-														<AcitvityIcon type={isNote ? 'note' : 'project'} className={`w-3 h-3 ${iconClass} shrink-0`} />
-														<span onClick={(e) => { e.stopPropagation(); if (isNote) handleOpenNoteEditor(item.id); else handleOpenProjectEditor(item.id); }} className="whitespace-normal text-left break-words cursor-pointer hover:bg-black/10 rounded px-1 -mx-1 transition-colors font-medium">{item.title}</span>
-														<button onClick={(e) => { e.stopPropagation(); handleInlineNoteToggleForActivity(item.id, false); }} className="ml-1 hover:bg-black/10 rounded p-0.5 transition-colors" title="Odpojit"><X className="w-3.5 h-3.5 opacity-60 hover:opacity-100" /></button>
-													</span>
-												)
-											})}
-										</div>
-										<div className="relative flex flex-col" ref={activityLinkDropdownRef}>
-											<div className="relative">
-												<Search className="w-3.5 h-3.5 text-blue-400/50 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-												<input type="text" placeholder="Připojit projekt či poznámku..." value={linkSearchQuery} onFocus={() => setIsLinkDropdownOpen(true)} onChange={(e) => { setLinkSearchQuery(e.target.value); if (!isLinkDropdownOpen) setIsLinkDropdownOpen(true); }} className="w-full bg-white border border-blue-300 pl-9 pr-8 py-2 text-sm text-blue-900 placeholder:text-blue-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400 transition-all shadow-sm" />
-												<div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600/50 pointer-events-none">{isLinkDropdownOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
-											</div>
-											{isLinkDropdownOpen && (
-												<div className="absolute top-full left-0 right-0 mt-1 bg-white border border-blue-300 rounded-lg max-h-60 flex flex-col shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100">
-													<div className="overflow-y-auto p-1">
-														{searchResults.length > 0 ? (
-															searchResults.map(item => {
-																const isLinked = tempActivityLinks.has(item.id);
-																const isNote = item._type === 'note';
-																const rowHoverClass = isNote ? "hover:bg-yellow-50 border-yellow-50" : "hover:bg-purple-50 border-purple-50";
-																const checkBgClass = isNote ? (isLinked ? 'bg-yellow-500 border-yellow-500 text-white' : 'bg-white border-slate-300 text-transparent group-hover:border-yellow-300') : (isLinked ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-slate-300 text-transparent group-hover:border-purple-300');
-																const iconColor = isNote ? "text-yellow-500" : "text-purple-500";
-																const textColor = isNote ? "text-yellow-900" : "text-purple-900";
-																return (
-																	<button key={item.id} onClick={(e) => { e.stopPropagation(); handleInlineNoteToggleForActivity(item.id, !isLinked); }} className={`w-full text-left py-1.5 px-2 border-b last:border-0 flex items-start gap-2 transition-colors rounded ${rowHoverClass} group`}>
-																		<div className={`w-4 h-4 flex items-center justify-center rounded border transition-colors shrink-0 mt-0.5 ${checkBgClass}`}><Check className="w-3 h-3" strokeWidth={3} /></div>
-																		{isNote ? <StickyNote className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${iconColor}`} /> : <Folder className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${iconColor}`} />}
-																		<span className={`flex-1 text-xs break-words leading-tight font-medium ${textColor}`}>{item.title}</span>
-																	</button>
-																);
-															})
-														) : (
-															<div className="p-4 text-center text-xs text-slate-400 italic">{linkSearchQuery ? "Žádné výsledky." : "Začněte psát pro vyhledání..."}</div>
-														)}
-													</div>
-												</div>
-											)}
-										</div>
-									</div>
+								{activeActivityType === "single" && (
+									<ActivityAttachments
+										attachments={allAttachments}
+										searchResults={searchResults}
+										linkedIds={tempActivityLinks}
+										searchQuery={linkSearchQuery}
+										isDropdownOpen={isLinkDropdownOpen}
+										dropdownRef={activityLinkDropdownRef}
+										onSearchQueryChange={setLinkSearchQuery}
+										onOpenDropdown={() => setIsLinkDropdownOpen(true)}
+										onToggleAttachment={handleInlineNoteToggleForActivity}
+										onOpenNote={handleOpenNoteEditor}
+										onOpenProject={handleOpenProjectEditor}
+									/>
 								)}
 							</div>
 						</div>

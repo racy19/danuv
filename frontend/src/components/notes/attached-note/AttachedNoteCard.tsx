@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Id, Note } from "../../../../../shared/types";
 import { NoteActions } from "./NoteActions";
 import { NoteContent } from "./NoteContent";
-import { EventHandlers } from "../../events/eventCardTypes";
+import { EventHandlers } from "../../events/event-card/eventCardTypes";
 
 type HoverZone = "before" | "after" | null;
 

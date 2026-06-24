@@ -1,4 +1,4 @@
-import { EventHoverZone } from "../components/events/eventCardTypes";
+import { EventHoverZone } from "../components/events/event-card/eventCardTypes";
 
 export const getEventCardClassName = (
     hoverZone: EventHoverZone,

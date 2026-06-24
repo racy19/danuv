@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { EventHoverZone, ListEventCardProps } from "./eventCardTypes";
-import { getEventDisplayInfo } from "../../utils/eventDisplayUtils";
-import { getEventCardClassName } from "../../utils/eventCardUtils";
-import { getSortedChildren } from "../../utils/itemChildrenUtils";
+import { getEventDisplayInfo } from "../../../utils/eventDisplayUtils";
+import { getEventCardClassName } from "../../../utils/eventCardUtils";
+import { getSortedChildren } from "../../../utils/itemChildrenUtils";
 import { EventHoverOverlay } from "./EventHoverOverlay";
 import { EventHeader } from "./EventHeader";
-import { AttachedNoteCard } from "../notes/attached-note/AttachedNoteCard";
+import { AttachedNoteCard } from "../../notes/attached-note/AttachedNoteCard";
 import { EventStatusBadge } from "./EventStatusBadge";
-import { isCustomSortingEnabled } from "../../utils/sortUtils";
+import { isCustomSortingEnabled } from "../../../utils/sortUtils";
 
 export const ListEventCard = ({
 	item,

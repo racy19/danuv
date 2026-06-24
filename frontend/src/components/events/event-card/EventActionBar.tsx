@@ -5,9 +5,8 @@ import {
 	StickyNote,
 	Trash2,
 } from "lucide-react";
-
-import type { Id } from "../../../../shared/types";
 import { EventActions } from "./eventCardTypes";
+import { Id } from "../../../../../shared/types";
 
 type EventActionItem = {
 	id: Id;

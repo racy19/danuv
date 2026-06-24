@@ -1,6 +1,6 @@
-import { Id } from "../../../../shared/types";
-import { RenderableCalendarItem, SharedNotesMap } from "../../types/renderType";
-import { ListSortSettings } from "../../utils/sortUtils";
+import { Id } from "../../../../../shared/types";
+import { RenderableCalendarItem, SharedNotesMap } from "../../../types/renderType";
+import { ListSortSettings } from "../../../utils/sortUtils";
 
 export type EventActions = {
 	toggleStatus: (
