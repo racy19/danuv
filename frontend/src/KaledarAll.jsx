@@ -28,6 +28,8 @@ import { NotePickerModal } from './components/notes/NotePickerModal';
 import { ActivityEditorHeader } from './components/events/activity-editor/ActivityEditorHeader';
 import { ActivityEditorBasicFields } from './components/events/activity-editor/ActivityEditorBasicFields';
 import { ActivityAttachments } from './components/events/activity-editor/ActivityAttachments';
+import { SingleActivityDateFields } from './components/events/activity-editor/recurrence/SingleActivityDateFields';
+import { RecurrenceDateRange } from './components/events/activity-editor/recurrence/RecurrenceDateRange';
 
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
 // a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
@@ -3361,26 +3363,17 @@ export default function KalendarApp() {
 
 								{(isRecurring || isMultiRecurring) ? (
 									<div className="animate-in fade-in slide-in-from-top-2 border-b border-blue-200 bg-blue-50/50 p-0 overflow-y-auto overflow-x-hidden w-full">
-										<div className="flex flex-col md:flex-row w-full border-b border-blue-300">
-											{!isMultiRecurring && (
-												<div className="flex-1 flex flex-col items-center justify-center p-5 border-b border-blue-300 md:border-b-0 md:border-r">
-													<label className="block text-[10px] font-bold text-blue-800 uppercase tracking-wide mb-2 text-center">Čas začátku a konce</label>
-													<div className="flex items-center gap-2 justify-center">
-														<input type="time" value={activeActivityStartTime} onChange={(e) => setActiveActivityStartTime(e.target.value)} className="bg-white border border-blue-200 rounded px-2 py-1 text-lg font-semibold focus:border-blue-400 focus:outline-none shadow-sm w-24 text-center" />
-														<ArrowRight className="w-4 h-4 text-blue-400 shrink-0" />
-														<input type="time" value={activeActivityEndTime} onChange={(e) => setActiveActivityEndTime(e.target.value)} className="bg-white border border-blue-200 rounded px-2 py-1 text-lg font-semibold focus:border-blue-400 focus:outline-none shadow-sm w-24 text-center" />
-													</div>
-												</div>
-											)}
-											<div className={isMultiRecurring ? "flex flex-col items-start justify-start px-5 py-3 w-full" : "flex flex-col items-center justify-center p-5 flex-1"}>
-												<label className={`block text-[10px] font-bold text-blue-800 uppercase tracking-wide mb-2 ${isMultiRecurring ? 'text-left' : 'text-center'}`}>Interval trvání opakující se aktivity</label>
-												<div className={`flex items-center gap-2 w-full ${isMultiRecurring ? 'justify-start' : 'justify-center'}`}>
-													<input type="date" value={activeActivityIntervalStart} onChange={(e) => setActiveActivityIntervalStart(e.target.value)} className={`border rounded focus:outline-none shadow-sm focus:border-blue-400 transition-colors ${isMultiRecurring ? 'px-3 py-1.5 text-sm font-semibold' : 'px-2 py-1 text-lg font-semibold'} ${isMultiRecurring && !activeActivityIntervalStart ? 'bg-red-50 border-red-300' : 'bg-white border-blue-200'}`} />
-													<ArrowRight className="w-4 h-4 text-blue-400 shrink-0" />
-													<input type="date" value={activeActivityIntervalEnd} onChange={(e) => setActiveActivityIntervalEnd(e.target.value)} className={`border rounded focus:outline-none shadow-sm focus:border-blue-400 transition-colors ${isMultiRecurring ? 'px-3 py-1.5 text-sm font-semibold' : 'px-2 py-1 text-lg font-semibold'} ${isMultiRecurring && !activeActivityIntervalEnd ? 'bg-red-50 border-red-300' : 'bg-white border-blue-200'}`} />
-												</div>
-											</div>
-										</div>
+										<RecurrenceDateRange
+											isMultiRecurring={isMultiRecurring}
+											startTime={activeActivityStartTime}
+											endTime={activeActivityEndTime}
+											intervalStart={activeActivityIntervalStart}
+											intervalEnd={activeActivityIntervalEnd}
+											onStartTimeChange={setActiveActivityStartTime}
+											onEndTimeChange={setActiveActivityEndTime}
+											onIntervalStartChange={setActiveActivityIntervalStart}
+											onIntervalEndChange={setActiveActivityIntervalEnd}
+										/>
 
 										<div className="flex flex-col w-full px-5 py-3">
 											<label className="block text-[10px] font-bold text-blue-800 uppercase tracking-wide mb-2 text-left">Frekvence opakování</label>
@@ -3701,13 +3694,16 @@ export default function KalendarApp() {
 											</div>
 										</div>
 									</div>
-								) : (
-									<div className="px-4 py-2 flex flex-wrap gap-4 items-center mt-2">
-										<div className="flex flex-col"><label className="text-[10px] font-bold text-blue-800 uppercase mb-1">Začátek</label><div className="flex gap-1"><input type="date" value={activeActivityStart} onChange={(e) => setActiveActivityStart(e.target.value)} className="border rounded px-2 py-1 text-lg font-semibold focus:outline-none shadow-sm bg-white border-blue-200 focus:border-blue-400" /><input type="time" value={activeActivityStartTime} onChange={(e) => setActiveActivityStartTime(e.target.value)} className="bg-white border border-blue-200 rounded px-2 py-1 text-lg font-semibold focus:border-blue-400 focus:outline-none shadow-sm" /></div></div>
-										<ArrowRight className="w-4 h-4 mt-4 text-blue-400" />
-										<div className="flex flex-col"><label className="text-[10px] font-bold text-blue-800 uppercase mb-1">Konec</label><div className="flex gap-1"><input type="date" value={activeActivityEnd} onChange={(e) => setActiveActivityEnd(e.target.value)} className="border rounded px-2 py-1 text-lg font-semibold focus:outline-none shadow-sm bg-white border-blue-200 focus:border-blue-400" /><input type="time" value={activeActivityEndTime} onChange={(e) => setActiveActivityEndTime(e.target.value)} className="bg-white border border-blue-200 rounded px-2 py-1 text-lg font-semibold focus:border-blue-400 focus:outline-none shadow-sm" /></div></div>
-									</div>
-								)}
+								) : <SingleActivityDateFields
+									startDate={activeActivityStart}
+									endDate={activeActivityEnd}
+									startTime={activeActivityStartTime}
+									endTime={activeActivityEndTime}
+									onStartDateChange={setActiveActivityStart}
+									onEndDateChange={setActiveActivityEnd}
+									onStartTimeChange={setActiveActivityStartTime}
+									onEndTimeChange={setActiveActivityEndTime}
+								/>}
 
 								{activeActivityType === "single" && (
 									<ActivityAttachments
