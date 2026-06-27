@@ -1,41 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Clock, ChevronRight, ChevronDown, ChevronUp, Check, Calendar as CalendarIcon, List, CheckSquare, Square, Undo, X, Save, StickyNote, Database, ListTodo, Equal, MoreVertical, Copy, GripVertical, CornerDownRight, CornerLeftUp, FileText, Info, Code, LayoutTemplate, HelpCircle, Calculator, ListChecks, Settings, ArrowUp, ArrowDown, ArrowUpDown, AlertTriangle, ArrowRight, MoveLeft, MousePointerClick, ArrowUpCircle, ListTree, Download, Upload, FileDown, FileUp, ShieldAlert, User, Link as LinkIcon, Edit3, ExternalLink, Folder, Search, Eye, EyeOff, Type, Pin, MoreHorizontal, Unlink, ArrowRightCircle, Copy as CopyIcon, CalendarPlus, Repeat, CalendarRange, RotateCw, ListOrdered, RefreshCw, Ban, TypeIcon } from 'lucide-react';
-import { DAY_NAMES_SHORT, formatDateCZ, getDateStr, getDayName, getISOWeek, getTodayStr } from './utils/dateUtils';
-import { defaultEvents } from './data/mockEvents';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, Check, Calendar as CalendarIcon, List, X, Save, StickyNote, Database, Info, HelpCircle, Settings, ArrowUpDown, Download, Upload, FileDown, FileUp, ShieldAlert, Folder, Search, Eye, EyeOff, Pin, MoreHorizontal, RotateCw } from 'lucide-react';
+import { DAY_NAMES_SHORT, getDateStr, getDayName, getTodayStr } from './utils/dateUtils';
 import { loadEvents, loadFromStorage, loadNotes, saveEvents, saveNotes, saveToStorage, STORAGE_KEYS } from './services/storageService';
 import { defaultSharedNotes } from './data/mockNotes';
-import { GROUP_ORDER_OPTIONS, INTERNAL_SORT_OPTIONS, isCustomSortingEnabled, sortAndGroupItems } from './utils/sortUtils';
+import { GROUP_ORDER_OPTIONS, INTERNAL_SORT_OPTIONS, sortAndGroupItems } from './utils/sortUtils';
 import { buildRecurrenceGenerationInput, createRecurrenceSignature, generateRecurrenceInstances, hasRecurrenceStructureChanged, normalizeMultiDefs, parseRecurrenceSignature, sortRecurrenceInstances, validateRecurrence, validateSingleActivity } from './utils/recurrenceUtils';
 import { areSetsEqual } from './utils/commonUtils';
 import { AcitvityIcon } from './components/icons/ActivityIcon';
 import { CustomSortSelect } from './components/ui/CustomSortSelect';
-import { EventStatusBadge } from './components/events/event-card/EventStatusBadge';
-import { EventHoverOverlay } from './components/events/event-card/EventHoverOverlay';
-import { EventHeader } from './components/events/event-card/EventHeader';
-import { getEventDisplayInfo } from './utils/eventDisplayUtils';
-import { getSortedChildren } from './utils/itemChildrenUtils';
-import { getEventCardClassName } from './utils/eventCardUtils';
 import { ListEventCard } from './components/events/event-card/ListEventCard';
 import { getLinkedNoteTargets, getNoteLinkSearchResults, hasNoteEditorChanges } from './utils/noteEditorUtils';
-import { Modal } from './components/ui/Modal';
-import { NoteEditorHeader } from './components/notes/note-editor/NoteEditorHeader';
-import { NoteTitleInput } from './components/notes/note-editor/NoteTitleInput';
-import { NoteContentInput } from './components/notes/note-editor/NoteContentInput';
-import { NoteLinkedItems } from './components/notes/note-editor/NoteLinkedItems';
-import { NoteLinkSearch } from './components/notes/note-editor/NoteLinkSearch';
 import { NoteEditorModal } from './components/notes/note-editor/NoteEditorModal';
 import { NotePickerModal } from './components/notes/NotePickerModal';
 import { ActivityEditorHeader } from './components/events/activity-editor/ActivityEditorHeader';
 import { ActivityEditorBasicFields } from './components/events/activity-editor/ActivityEditorBasicFields';
 import { ActivityAttachments } from './components/events/activity-editor/ActivityAttachments';
 import { SingleActivityDateFields } from './components/events/activity-editor/recurrence/SingleActivityDateFields';
-import { RecurrenceDateRange } from './components/events/activity-editor/recurrence/RecurrenceDateRange';
-import { RecurrencePatternEditor } from './components/events/activity-editor/recurrence/RecurrencePatternEditor';
-import { MultiRecurringDefsEditor } from './components/events/activity-editor/recurrence/MultiRecurringDefsEditor';
-import { RecurrenceInstancesList } from './components/events/activity-editor/recurrence/RecurrenceInstancesList';
-import { RecurrenceInstanceAttachments } from './components/events/activity-editor/recurrence/RecurrenceInstanceAttachments';
-import { RecurrenceInstanceRow } from './components/events/activity-editor/recurrence/RecurrenceInstanceRow';
 import { RecurrenceEditor } from './components/events/activity-editor/recurrence/RecurrenceEditor';
+import { ActivityEditorModal } from './components/events/activity-editor/ActivityEditorModal';
 
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
 // a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
@@ -50,13 +32,11 @@ export default function KalendarApp() {
 	const [justDroppedId, setJustDroppedId] = useState(null);
 	const [draggingNote, setDraggingNote] = useState(null);
 	const [originalEvents, setOriginalEvents] = useState({});
-	const [safeGuardIds, setSafeGuardIds] = useState([]);
 	const [deleteConfirmationLevel, setDeleteConfirmationLevel] = useState(0);
 	const [warningMsg, setWarningMsg] = useState(null);
 	const [expandedIds, setExpandedIds] = useState([]);
 	const [openTypeDropdownId, setOpenTypeDropdownId] = useState(null);
 	const [openActionMenuId, setOpenActionMenuId] = useState(null);
-	const [showSortSettings, setShowSortSettings] = useState(false);
 	const [viewSearchQuery, setViewSearchQuery] = useState("");
 	const [sectionState, setSectionState] = useState({
 		hidden: true,
@@ -368,17 +348,6 @@ export default function KalendarApp() {
 		});
 	};
 
-	const handleTempStatusToggle = (e, id, originalStatus) => {
-		e.stopPropagation();
-		setTempStatusChanges(prev => {
-			const currentVisual = prev[id] !== undefined ? prev[id] : originalStatus;
-			const newValue = !currentVisual;
-			const newMap = { ...prev, [id]: newValue };
-			if (newValue === originalStatus) delete newMap[id];
-			return newMap;
-		});
-	};
-
 	const handleRecurrencePatternChange = (pattern) => {
 		setActiveActivityRecurrencePattern(pattern);
 		if (pattern === 'daily') { setActiveActivityRecurrenceUnit('day'); setActiveActivityRecurrenceInterval(1); }
@@ -499,7 +468,6 @@ export default function KalendarApp() {
 	const activityTitleRef = useRef(null);
 	const activityLinkDropdownRef = useRef(null);
 	const activityEditorRef = useRef(null);
-	const [isTaskPickerOpen, setIsTaskPickerOpen] = useState(false);
 	const [linkSearchQuery, setLinkSearchQuery] = useState("");
 	const [isLinkDropdownOpen, setIsLinkDropdownOpen] = useState(false);
 
@@ -943,12 +911,6 @@ export default function KalendarApp() {
 		undoData.action();
 		if (undoData.timeoutId) clearTimeout(undoData.timeoutId);
 		setUndoData(null);
-	};
-
-	const handleOpenNotePicker = (targetId) => {
-		setTargetItemIdForNote(targetId);
-		setIsNotePickerOpen(true);
-		setOpenActionMenuId(null);
 	};
 
 	const handleLinkNote = (noteId) => {
@@ -1615,7 +1577,6 @@ export default function KalendarApp() {
 		}
 	};
 
-
 	const handleAddEvent = (dateKey) => {
 		if (!newEventTitle.trim()) return;
 
@@ -1630,80 +1591,6 @@ export default function KalendarApp() {
 		setNewEventTitle(""); setAddingToDate(null);
 	};
 
-	const updateEventField = (id, fieldOrUpdates, value) => {
-		setEvents(prev => updateTree(prev, id, (item) => {
-			if (typeof fieldOrUpdates === 'object') {
-				return { ...item, ...fieldOrUpdates };
-			}
-			return { ...item, [fieldOrUpdates]: value };
-		}));
-	};
-
-	const handleSaveEdit = (id) => {
-		const { item } = findItemAndParent(events, id);
-		if (!item) return;
-
-		if (item.type === 'event' || item.type === 'project') {
-			const sDate = item.start;
-			const eDate = item.end;
-			const sTime = item.startTime;
-			const eTime = item.endTime;
-
-			if (!sDate && (eDate || eTime)) {
-				setWarningMsg("Nelze zadat konec události bez vyplněného data začátku!");
-				setTimeout(() => setWarningMsg(null), 5000);
-				return;
-			}
-
-			if (sDate && eDate) {
-				if (sDate > eDate) {
-					setWarningMsg("Datum konce nemůže být před datem začátku!");
-					setTimeout(() => setWarningMsg(null), 5000);
-					return;
-				}
-				if (sDate === eDate) {
-					if (sTime && eTime && sTime > eTime) {
-						setWarningMsg("Čas konce nemůže být před časem začátku!");
-						setTimeout(() => setWarningMsg(null), 5000);
-						return;
-					}
-				}
-			}
-		}
-
-		const originalItemState = originalEvents[id];
-
-		const newOriginals = { ...originalEvents };
-		delete newOriginals[id];
-		setOriginalEvents(newOriginals);
-		setEditingId(null);
-
-		if (originalItemState) {
-			showUndoNotification("Změny uloženy", () => {
-				setEvents(prev => updateTree(prev, id, () => originalItemState));
-			});
-		}
-	};
-
-	const handleCancelEdit = (id) => {
-		if (originalEvents[id]) {
-			setEvents(prev => updateTree(prev, id, () => originalEvents[id]));
-			const newOriginals = { ...originalEvents };
-			delete newOriginals[id];
-			setOriginalEvents(newOriginals);
-		}
-		setEditingId(null);
-	};
-
-	const handleRequestEdit = (targetId) => {
-		if (editingId !== null && editingId !== targetId) {
-			setWarningMsg("Potvrďte úpravy v záznamu");
-			setTimeout(() => setWarningMsg(null), 5000);
-			return false;
-		}
-		return true;
-	};
-
 	const handleViewSwitch = (viewName) => {
 		if (editingId !== null) {
 			setWarningMsg("Potvrďte úpravy v záznamu");
@@ -1712,11 +1599,6 @@ export default function KalendarApp() {
 		}
 		setViewSearchQuery("");
 		setActiveView(viewName);
-	};
-
-	const toggleComplete = (e, id) => {
-		e?.stopPropagation();
-		setEvents(prev => updateTree(prev, id, (item) => ({ ...item, completed: !item.completed })));
 	};
 
 	const handleToggleStatusWithUndo = (e, id) => {
@@ -1788,45 +1670,6 @@ export default function KalendarApp() {
 			});
 		}
 		setOpenActionMenuId(null);
-	};
-
-	const duplicateEvent = (id) => {
-		const { item, parent } = findItemAndParent(events, id);
-		if (!item) return;
-
-		const cloneItem = (itm) => ({
-			...JSON.parse(JSON.stringify(itm)),
-			id: Date.now() + Math.random(),
-			title: `${itm.title} (kopie)`,
-			subtasks: itm.subtasks ? itm.subtasks.map(cloneItem) : []
-		});
-
-		const newItem = cloneItem(item);
-
-		if (!parent) {
-			const idx = events.findIndex(e => e.id === id);
-			const newEvents = [...events];
-			newEvents.splice(idx + 1, 0, newItem);
-			setEvents(newEvents);
-		} else {
-			setEvents(prev => updateTree(prev, parent.id, (p) => ({
-				...p,
-				subtasks: [...p.subtasks, newItem]
-			})));
-		}
-		setOpenActionMenuId(null);
-	};
-
-	const addSubtask = (parentId) => {
-		setEvents(prev => updateTree(prev, parentId, (item) => {
-			const newItem = {
-				id: Date.now(), title: "", type: item.type === 'note' ? 'note' : 'task', completed: false,
-				start: item.type === 'event' ? item.start : "", end: item.type === 'event' ? item.end : "",
-				startTime: "", endTime: "", subtasks: []
-			};
-			if (!expandedIds.includes(parentId)) setExpandedIds(old => [...old, parentId]);
-			return { ...item, subtasks: [...(item.subtasks || []), newItem] };
-		}));
 	};
 
 	// --- ADVANCED DRAG & DROP ---
@@ -2133,74 +1976,6 @@ export default function KalendarApp() {
 		setEvents(insertAfter(newTree));
 		triggerDropAnimation(dragId);
 		showUndoNotification("Položka přesunuta", () => setEvents(previousEvents));
-	};
-
-
-	const indentItem = (id) => {
-		const moveInTree = (list) => {
-			const idx = list.findIndex(i => i.id === id);
-			if (idx > 0) {
-				const prevSibling = list[idx - 1];
-				const itemToMove = list[idx];
-				const newList = [...list];
-				newList.splice(idx, 1);
-				const newPrevSibling = { ...prevSibling, subtasks: [...(prevSibling.subtasks || []), itemToMove] };
-				newList[idx - 1] = newPrevSibling;
-				if (!expandedIds.includes(prevSibling.id)) setExpandedIds(prev => [...prev, prevSibling.id]);
-				return newList;
-			}
-			return list.map(item => {
-				let newItem = { ...item };
-				if (newItem.subtasks) newItem.subtasks = moveInTree(newItem.subtasks);
-				if (newItem.recurrenceInstances) newItem.recurrenceInstances = moveInTree(newItem.recurrenceInstances);
-				return newItem;
-			});
-		};
-		setEvents(prev => moveInTree(prev));
-		setOpenActionMenuId(null);
-	};
-
-	const outdentItem = (id) => {
-		const processList = (list) => {
-			const result = [];
-			list.forEach(item => {
-				let processedSubtasks = item.subtasks;
-				let processedRecurrences = item.recurrenceInstances;
-
-				let outdentedFromSub = null;
-				let outdentedFromRec = null;
-
-				if (item.subtasks) {
-					const idx = item.subtasks.findIndex(s => s.id === id);
-					if (idx !== -1) {
-						outdentedFromSub = item.subtasks[idx];
-						processedSubtasks = [...item.subtasks];
-						processedSubtasks.splice(idx, 1);
-					} else {
-						processedSubtasks = processList(item.subtasks);
-					}
-				}
-
-				if (item.recurrenceInstances) {
-					const idx = item.recurrenceInstances.findIndex(s => s.id === id);
-					if (idx !== -1) {
-						outdentedFromRec = item.recurrenceInstances[idx];
-						processedRecurrences = [...item.recurrenceInstances];
-						processedRecurrences.splice(idx, 1);
-					} else {
-						processedRecurrences = processList(item.recurrenceInstances);
-					}
-				}
-
-				result.push({ ...item, subtasks: processedSubtasks, recurrenceInstances: processedRecurrences });
-
-				if (outdentedFromSub) result.push(outdentedFromSub);
-				if (outdentedFromRec) result.push(outdentedFromRec);
-			});
-			return result;
-		};
-		setEvents(prev => processList(prev));
-		setOpenActionMenuId(null);
 	};
 
 	const calculateStats = (items) => {
@@ -3332,104 +3107,107 @@ export default function KalendarApp() {
 					const sourceCurrentsEditor = {};
 
 					return (
-						<div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" style={{ zIndex: editorZIndices.activity }}>
-							<div ref={activityEditorRef} className="bg-blue-50 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] h-auto border border-blue-200 relative transition-all duration-300">
-								<ActivityEditorHeader
-									activityType={activeActivityType}
-									multiDefs={activeActivityMultiDefs}
-									hasChanges={hasChanges}
-									onActivityTypeChange={setActiveActivityType}
-									onMultiDefsChange={setActiveActivityMultiDefs}
-									onSave={handleSaveActivity}
-									onClose={() => setIsActivityEditorOpen(false)}
-								/>
+						<ActivityEditorModal
+							isOpen={isActivityEditorOpen}
+							onClose={() => setIsActivityEditorOpen(false)}
+							contentRef={activityEditorRef}
+							zIndexStyle={{ zIndex: editorZIndices.activity }}
+						>
+							<ActivityEditorHeader
+								activityType={activeActivityType}
+								multiDefs={activeActivityMultiDefs}
+								hasChanges={hasChanges}
+								onActivityTypeChange={setActiveActivityType}
+								onMultiDefsChange={setActiveActivityMultiDefs}
+								onSave={handleSaveActivity}
+								onClose={() => setIsActivityEditorOpen(false)}
+							/>
 
-								<ActivityEditorBasicFields
-									activityType={activeActivityType}
-									title={activeActivityTitle}
-									completed={activeActivityCompleted}
-									showNameHelp={showNameHelp}
-									nameHelpRef={nameHelpRef}
-									titleRef={activityTitleRef}
-									onTitleChange={setActiveActivityTitle}
-									onCompletedChange={setActiveActivityCompleted}
-									onShowNameHelpChange={setShowNameHelp}
-								/>
+							<ActivityEditorBasicFields
+								activityType={activeActivityType}
+								title={activeActivityTitle}
+								completed={activeActivityCompleted}
+								showNameHelp={showNameHelp}
+								nameHelpRef={nameHelpRef}
+								titleRef={activityTitleRef}
+								onTitleChange={setActiveActivityTitle}
+								onCompletedChange={setActiveActivityCompleted}
+								onShowNameHelpChange={setShowNameHelp}
+							/>
 
-								{(isRecurring || isMultiRecurring) ? (
-									<RecurrenceEditor
-										isMultiRecurring={isMultiRecurring}
-										startTime={activeActivityStartTime}
-										endTime={activeActivityEndTime}
-										intervalStart={activeActivityIntervalStart}
-										intervalEnd={activeActivityIntervalEnd}
-										pattern={activeActivityRecurrencePattern}
-										interval={activeActivityRecurrenceInterval}
-										unit={activeActivityRecurrenceUnit}
-										days={activeActivityRecurrenceDays}
-										weeks={activeActivityRecurrenceWeeks}
-										multiDefs={activeActivityMultiDefs}
-										currentInstances={currentRecurrenceInstances}
-										sortedInstances={sortedInstancesForEditor}
-										sourceTotals={sourceTotalsEditor}
-										recurrenceNeedsUpdate={recurrenceNeedsUpdate}
-										editingInstanceId={editingInstanceId}
-										instanceEditData={instanceEditData}
-										activeActivityTitle={activeActivityTitle}
-										sharedNotes={sharedNotes}
-										showNameHelp={showNameHelp}
-										nameHelpRef={nameHelpRef}
-										activeInstanceTextareaRef={activeInstanceTextareaRef}
-										onStartTimeChange={setActiveActivityStartTime}
-										onEndTimeChange={setActiveActivityEndTime}
-										onIntervalStartChange={setActiveActivityIntervalStart}
-										onIntervalEndChange={setActiveActivityIntervalEnd}
-										onPatternChange={handleRecurrencePatternChange}
-										onIntervalChange={setActiveActivityRecurrenceInterval}
-										onUnitChange={setActiveActivityRecurrenceUnit}
-										onToggleDay={toggleRecurrenceDay}
-										onToggleWeek={toggleRecurrenceWeek}
-										onMultiDefsChange={setActiveActivityMultiDefs}
-										onShowNameHelpChange={setShowNameHelp}
-										onRegenerate={handleManualRegeneration}
-										onRevertChanges={handleRevertRecurrenceChanges}
-										onToggleComplete={toggleRecurrenceInstanceComplete}
-										onEditDataChange={setInstanceEditData}
-										onSaveEdit={saveEditingInstance}
-										onCancelEdit={cancelEditingInstance}
-										onStartEdit={startEditingInstance}
-										onRestore={restoreRecurrenceInstance}
-										onToggleSuppression={toggleRecurrenceInstanceSuppression}
-										onOpenNote={handleOpenNoteEditor}
-									/>
-								) : <SingleActivityDateFields
-									startDate={activeActivityStart}
-									endDate={activeActivityEnd}
+							{(isRecurring || isMultiRecurring) ? (
+								<RecurrenceEditor
+									isMultiRecurring={isMultiRecurring}
 									startTime={activeActivityStartTime}
 									endTime={activeActivityEndTime}
-									onStartDateChange={setActiveActivityStart}
-									onEndDateChange={setActiveActivityEnd}
+									intervalStart={activeActivityIntervalStart}
+									intervalEnd={activeActivityIntervalEnd}
+									pattern={activeActivityRecurrencePattern}
+									interval={activeActivityRecurrenceInterval}
+									unit={activeActivityRecurrenceUnit}
+									days={activeActivityRecurrenceDays}
+									weeks={activeActivityRecurrenceWeeks}
+									multiDefs={activeActivityMultiDefs}
+									currentInstances={currentRecurrenceInstances}
+									sortedInstances={sortedInstancesForEditor}
+									sourceTotals={sourceTotalsEditor}
+									recurrenceNeedsUpdate={recurrenceNeedsUpdate}
+									editingInstanceId={editingInstanceId}
+									instanceEditData={instanceEditData}
+									activeActivityTitle={activeActivityTitle}
+									sharedNotes={sharedNotes}
+									showNameHelp={showNameHelp}
+									nameHelpRef={nameHelpRef}
+									activeInstanceTextareaRef={activeInstanceTextareaRef}
 									onStartTimeChange={setActiveActivityStartTime}
 									onEndTimeChange={setActiveActivityEndTime}
-								/>}
+									onIntervalStartChange={setActiveActivityIntervalStart}
+									onIntervalEndChange={setActiveActivityIntervalEnd}
+									onPatternChange={handleRecurrencePatternChange}
+									onIntervalChange={setActiveActivityRecurrenceInterval}
+									onUnitChange={setActiveActivityRecurrenceUnit}
+									onToggleDay={toggleRecurrenceDay}
+									onToggleWeek={toggleRecurrenceWeek}
+									onMultiDefsChange={setActiveActivityMultiDefs}
+									onShowNameHelpChange={setShowNameHelp}
+									onRegenerate={handleManualRegeneration}
+									onRevertChanges={handleRevertRecurrenceChanges}
+									onToggleComplete={toggleRecurrenceInstanceComplete}
+									onEditDataChange={setInstanceEditData}
+									onSaveEdit={saveEditingInstance}
+									onCancelEdit={cancelEditingInstance}
+									onStartEdit={startEditingInstance}
+									onRestore={restoreRecurrenceInstance}
+									onToggleSuppression={toggleRecurrenceInstanceSuppression}
+									onOpenNote={handleOpenNoteEditor}
+								/>
+							) : <SingleActivityDateFields
+								startDate={activeActivityStart}
+								endDate={activeActivityEnd}
+								startTime={activeActivityStartTime}
+								endTime={activeActivityEndTime}
+								onStartDateChange={setActiveActivityStart}
+								onEndDateChange={setActiveActivityEnd}
+								onStartTimeChange={setActiveActivityStartTime}
+								onEndTimeChange={setActiveActivityEndTime}
+							/>}
 
-								{activeActivityType === "single" && (
-									<ActivityAttachments
-										attachments={allAttachments}
-										searchResults={searchResults}
-										linkedIds={tempActivityLinks}
-										searchQuery={linkSearchQuery}
-										isDropdownOpen={isLinkDropdownOpen}
-										dropdownRef={activityLinkDropdownRef}
-										onSearchQueryChange={setLinkSearchQuery}
-										onOpenDropdown={() => setIsLinkDropdownOpen(true)}
-										onToggleAttachment={handleInlineNoteToggleForActivity}
-										onOpenNote={handleOpenNoteEditor}
-										onOpenProject={handleOpenProjectEditor}
-									/>
-								)}
-							</div>
-						</div>
+							{activeActivityType === "single" && (
+								<ActivityAttachments
+									attachments={allAttachments}
+									searchResults={searchResults}
+									linkedIds={tempActivityLinks}
+									searchQuery={linkSearchQuery}
+									isDropdownOpen={isLinkDropdownOpen}
+									dropdownRef={activityLinkDropdownRef}
+									onSearchQueryChange={setLinkSearchQuery}
+									onOpenDropdown={() => setIsLinkDropdownOpen(true)}
+									onToggleAttachment={handleInlineNoteToggleForActivity}
+									onOpenNote={handleOpenNoteEditor}
+									onOpenProject={handleOpenProjectEditor}
+								/>
+							)}
+						</ActivityEditorModal>
 					);
 				})()}
 			</div>

@@ -467,7 +467,6 @@ export const generateRecurrenceInstances = ({
 }: GenerateRecurrenceInstancesParams): RecurrenceInstance[] => {
 	if (!startStr || !endStr) return [];
 
-	debugger
 	const start = new Date(startStr);
 	const end = new Date(endStr);
 	const instances: RecurrenceInstance[] = [];
