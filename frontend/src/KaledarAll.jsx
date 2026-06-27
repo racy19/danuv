@@ -30,6 +30,8 @@ import { ActivityEditorBasicFields } from './components/events/activity-editor/A
 import { ActivityAttachments } from './components/events/activity-editor/ActivityAttachments';
 import { SingleActivityDateFields } from './components/events/activity-editor/recurrence/SingleActivityDateFields';
 import { RecurrenceDateRange } from './components/events/activity-editor/recurrence/RecurrenceDateRange';
+import { RecurrencePatternEditor } from './components/events/activity-editor/recurrence/RecurrencePatternEditor';
+import { MultiRecurringDefsEditor } from './components/events/activity-editor/recurrence/MultiRecurringDefsEditor';
 
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
 // a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
@@ -3364,156 +3366,28 @@ export default function KalendarApp() {
 											onIntervalEndChange={setActiveActivityIntervalEnd}
 										/>
 
-										<div className="flex flex-col w-full px-5 py-3">
-											<label className="block text-[10px] font-bold text-blue-800 uppercase tracking-wide mb-2 text-left">Frekvence opakování</label>
-											<div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full">
-												<div className="relative w-32 shrink-0">
-													<select value={activeActivityRecurrencePattern} onChange={(e) => handleRecurrencePatternChange(e.target.value)} className="w-full bg-white border border-blue-200 rounded px-3 py-1.5 text-sm font-semibold focus:border-blue-400 focus:outline-none shadow-sm appearance-none text-left cursor-pointer">
-														<option value="daily">Denně</option>
-														<option value="weekly">Týdně</option>
-														<option value="monthly">Měsíčně</option>
-														<option value="yearly">Ročně</option>
-														<option value="custom">Vlastní...</option>
-													</select>
-													<ChevronDown className="w-4 h-4 text-blue-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-												</div>
-												{activeActivityRecurrencePattern === 'custom' && (
-													<div className="flex items-center animate-in fade-in shrink-0 bg-white border border-blue-300 rounded-lg shadow-sm overflow-hidden h-[34px]">
-														<div className="px-3 h-full flex items-center bg-blue-50 border-r border-blue-200 text-[11px] font-bold text-blue-800 uppercase tracking-wide">Každý</div>
-														<input type="number" min="1" value={activeActivityRecurrenceInterval} onChange={(e) => setActiveActivityRecurrenceInterval(Number(e.target.value))} className="w-14 h-full text-center text-sm font-bold text-blue-900 focus:outline-none bg-transparent" />
-														<div className="w-px h-4 bg-blue-200 mx-0"></div>
-														<div className="relative h-full">
-															<select value={activeActivityRecurrenceUnit} onChange={(e) => setActiveActivityRecurrenceUnit(e.target.value)} className="appearance-none h-full pl-3 pr-8 text-sm font-semibold text-blue-900 bg-transparent focus:outline-none cursor-pointer"><option value="day">den</option><option value="week">týden</option><option value="month">měsíc</option><option value="year">rok</option></select>
-															<ChevronDown className="w-3.5 h-3.5 text-blue-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-														</div>
-													</div>
-												)}
-												{((activeActivityRecurrencePattern === 'custom' && activeActivityRecurrenceUnit === 'week') || activeActivityRecurrencePattern === 'weekly') && (
-													<div className="flex flex-wrap gap-1 animate-in fade-in slide-in-from-left-2 md:ml-2 items-center">
-														{[1, 2, 3, 4, 5, 6, 0].map(dayIdx => (
-															<button key={dayIdx} onClick={() => toggleRecurrenceDay(dayIdx)} className={`w-7 h-7 rounded-full text-[9px] font-bold flex items-center justify-center transition-all ${activeActivityRecurrenceDays.includes(dayIdx) ? 'bg-blue-600 text-white shadow-sm scale-110' : 'bg-white border border-blue-200 text-blue-400 hover:border-blue-400 hover:text-blue-600'}`}>{DAY_NAMES_SHORT[dayIdx].substring(0, 2)}</button>
-														))}
-														{activeActivityRecurrencePattern === 'weekly' && (
-															<>
-																<div className="w-px h-6 bg-blue-200 mx-1"></div>
-																<button onClick={() => toggleRecurrenceWeek('odd')} className={`h-7 px-2 rounded-full text-[9px] font-bold flex items-center justify-center transition-all ${activeActivityRecurrenceWeeks.includes('odd') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white border border-indigo-200 text-indigo-500 hover:border-indigo-400 hover:text-indigo-700'}`}>Lichý</button>
-																<button onClick={() => toggleRecurrenceWeek('even')} className={`h-7 px-2 rounded-full text-[9px] font-bold flex items-center justify-center transition-all ${activeActivityRecurrenceWeeks.includes('even') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white border border-indigo-200 text-indigo-500 hover:border-indigo-400 hover:text-indigo-700'}`}>Sudý</button>
-															</>
-														)}
-													</div>
-												)}
-											</div>
-										</div>
+										<RecurrencePatternEditor
+											pattern={activeActivityRecurrencePattern}
+											interval={activeActivityRecurrenceInterval}
+											unit={activeActivityRecurrenceUnit}
+											days={activeActivityRecurrenceDays}
+											weeks={activeActivityRecurrenceWeeks}
+											onPatternChange={handleRecurrencePatternChange}
+											onIntervalChange={setActiveActivityRecurrenceInterval}
+											onUnitChange={setActiveActivityRecurrenceUnit}
+											onToggleDay={toggleRecurrenceDay}
+											onToggleWeek={toggleRecurrenceWeek}
+										/>
 
 										{/* NOVÁ SEKCE: MULTI-DEFINICE (Rozvrh) */}
 										{isMultiRecurring && (
-											<div className="flex flex-col w-full px-5 py-3 border-t border-blue-200 bg-white/30">
-												<div className="flex flex-col gap-3">
-													{activeActivityMultiDefs.length > 0 ? (
-														activeActivityMultiDefs.map((def, defIdx) => (
-															<div key={defIdx} className="flex items-end gap-2 animate-in fade-in slide-in-from-left-1 duration-200">
-																<div className="flex flex-col gap-1 shrink-0">
-																	{defIdx === 0 && <label className="text-[10px] font-bold text-blue-800 uppercase tracking-wide pl-0.5">Čas začátku a konce</label>}
-																	<div className="flex items-center gap-1 bg-white border border-blue-200 rounded px-2 h-[34px] shadow-sm shrink-0">
-																		<input type="time" value={def.startTime} onChange={(e) => {
-																			const next = [...activeActivityMultiDefs];
-																			next[defIdx].startTime = e.target.value;
-																			setActiveActivityMultiDefs(next);
-																		}} className="bg-transparent text-sm font-bold text-blue-900 focus:outline-none w-[70px]" />
-																		<span className="text-blue-300 text-xs">-</span>
-																		<input type="time" value={def.endTime} onChange={(e) => {
-																			const next = [...activeActivityMultiDefs];
-																			next[defIdx].endTime = e.target.value;
-																			setActiveActivityMultiDefs(next);
-																		}} className="bg-transparent text-sm font-bold text-blue-900 focus:outline-none w-[70px]" />
-																	</div>
-																</div>
-
-																<div className="flex flex-col gap-1 flex-1 min-w-0">
-																	{defIdx === 0 && (
-																		<div className="flex items-center gap-2 pl-0.5">
-																			<label className="text-[10px] font-bold text-blue-800 uppercase tracking-wide leading-none m-0">Název aktivity</label>
-																			<div className="relative" ref={nameHelpRef}>
-																				<button
-																					onClick={(e) => { e.stopPropagation(); setShowNameHelp(!showNameHelp); }}
-																					className="text-blue-400 hover:text-blue-600 transition-colors cursor-pointer flex items-center -mt-0.5"
-																					title="Nápověda ke kódům v názvu"
-																				>
-																					<Info className="w-4 h-4" />
-																				</button>
-																				{showNameHelp && (
-																					<div className="absolute left-0 top-full mt-2 w-64 bg-slate-800 text-white p-3 rounded-lg shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200 text-xs leading-relaxed border border-slate-700 normal-case tracking-normal">
-																						<div className="font-bold mb-2 text-blue-300 border-b border-slate-700 pb-1 flex items-center gap-1.5">
-																							<HelpCircle className="w-3.5 h-3.5" /> Automatické číslování
-																						</div>
-																						<p className="mb-2">V názvu můžete použít tyto kódy pro automatické doplnění čísel:</p>
-																						<ul className="space-y-2">
-																							<li>
-																								<code className="bg-slate-700 px-1 rounded text-yellow-400 font-bold">{"<d>"}</code>
-																								<span className="ml-1">— Aktuální pořadové číslo dne (nezapočítává potlačené).</span>
-																							</li>
-																							<li>
-																								<code className="bg-slate-700 px-1 rounded text-yellow-400 font-bold">{"<s>"}</code>
-																								<span className="ml-1">— Celkový počet naplánovaných dní (nezapočítává potlačené).</span>
-																							</li>
-																							<li>
-																								<code className="bg-slate-700 px-1 rounded text-yellow-400 font-bold">{"<n>"}</code>
-																								<span className="ml-1">— Název skupiny / hlavní aktivity.</span>
-																							</li>
-																						</ul>
-																						<div className="mt-2 pt-2 border-t border-slate-700 text-[10px] text-slate-400 italic">
-																							Příklad: „{"<n>"} - Trénink {"<d>"} / {"<s>"}“ se zobrazí jako „Moje skupina - Trénink 1 / 10“.
-																						</div>
-																					</div>
-																				)}
-																			</div>
-																		</div>
-																	)}
-																	<input
-																		type="text"
-																		placeholder="Např. Matematika, Trénink..."
-																		value={def.title || ""}
-																		onChange={(e) => {
-																			const next = [...activeActivityMultiDefs];
-																			next[defIdx].title = e.target.value;
-																			setActiveActivityMultiDefs(next);
-																		}}
-																		className={`w-full border rounded px-3 h-[34px] text-sm font-bold text-slate-700 focus:border-blue-400 focus:outline-none shadow-sm transition-colors ${!(def.title && def.title.trim()) ? 'bg-red-50 border-red-300' : 'bg-white border-blue-200'}`}
-																	/>
-																</div>
-
-																{activeActivityMultiDefs.length > 1 ? (
-																	<button
-																		onClick={() => setActiveActivityMultiDefs(activeActivityMultiDefs.filter((_, i) => i !== defIdx))}
-																		title="Smazat položku"
-																		className="w-8 h-[34px] flex items-center justify-center rounded transition-colors shrink-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
-																	>
-																		<Trash2 className="w-4 h-4" />
-																	</button>
-																) : (
-																	<div className="w-8 h-[34px] shrink-0"></div>
-																)}
-															</div>
-														))
-													) : (
-														<div className="text-center py-6 border-2 border-dashed border-blue-100 rounded-lg text-xs text-blue-400 italic">
-															Zatím nejsou přidány žádné položky rozvrhu.
-														</div>
-													)}
-												</div>
-
-												<div className="flex items-center gap-2 mt-4">
-													<div className="flex-1 flex justify-end">
-														<button
-															onClick={() => setActiveActivityMultiDefs([...activeActivityMultiDefs, { startTime: "", endTime: "", title: "" }])}
-															className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
-														>
-															<Plus className="w-3.5 h-3.5" /> Přidat aktivitu
-														</button>
-													</div>
-													<div className="w-8 shrink-0"></div>
-												</div>
-											</div>
+											<MultiRecurringDefsEditor
+												defs={activeActivityMultiDefs}
+												showNameHelp={showNameHelp}
+												nameHelpRef={nameHelpRef}
+												onDefsChange={setActiveActivityMultiDefs}
+												onShowNameHelpChange={setShowNameHelp}
+											/>
 										)}
 
 										<div className="h-px bg-blue-300 w-full my-3"></div>
