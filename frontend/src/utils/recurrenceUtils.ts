@@ -560,3 +560,32 @@ export const buildRecurrenceGenerationInput = ({
 		multiDefs: activityType === "multi_recurring" ? multiDefs : [],
 	};
 };
+
+export const normalizeMultiDefs = (
+	multiDefs?: MultiRecurringDefinition[]
+): MultiRecurringDefinition[] => {
+	const normalized = (multiDefs || [])
+		.map((definition) => ({
+			startTime: definition.startTime || "",
+			endTime: definition.endTime || "",
+			title: (definition.title || "").trim(),
+		}))
+		.filter(
+			(definition) =>
+				definition.title ||
+				definition.startTime ||
+				definition.endTime
+		);
+
+	if (normalized.length === 0) {
+		return [
+			{
+				startTime: "",
+				endTime: "",
+				title: "",
+			},
+		];
+	}
+
+	return normalized;
+};

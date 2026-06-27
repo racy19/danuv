@@ -5,7 +5,7 @@ import { defaultEvents } from './data/mockEvents';
 import { loadEvents, loadFromStorage, loadNotes, saveEvents, saveNotes, saveToStorage, STORAGE_KEYS } from './services/storageService';
 import { defaultSharedNotes } from './data/mockNotes';
 import { GROUP_ORDER_OPTIONS, INTERNAL_SORT_OPTIONS, isCustomSortingEnabled, sortAndGroupItems } from './utils/sortUtils';
-import { buildRecurrenceGenerationInput, createRecurrenceSignature, generateRecurrenceInstances, hasRecurrenceStructureChanged, sortRecurrenceInstances, validateRecurrence, validateSingleActivity } from './utils/recurrenceUtils';
+import { buildRecurrenceGenerationInput, createRecurrenceSignature, generateRecurrenceInstances, hasRecurrenceStructureChanged, normalizeMultiDefs, parseRecurrenceSignature, sortRecurrenceInstances, validateRecurrence, validateSingleActivity } from './utils/recurrenceUtils';
 import { areSetsEqual } from './utils/commonUtils';
 import { AcitvityIcon } from './components/icons/ActivityIcon';
 import { CustomSortSelect } from './components/ui/CustomSortSelect';
@@ -267,20 +267,21 @@ export default function KalendarApp() {
 	]);
 
 	const handleManualRegeneration = () => {
-		const freshInstances = generateRecurrenceInstances
-		buildRecurrenceGenerationInput({
-			activityType: activeActivityType,
-			intervalStart: activeActivityIntervalStart,
-			intervalEnd: activeActivityIntervalEnd,
-			pattern: activeActivityRecurrencePattern,
-			interval: activeActivityRecurrenceInterval,
-			unit: activeActivityRecurrenceUnit,
-			days: activeActivityRecurrenceDays,
-			startTime: activeActivityStartTime,
-			endTime: activeActivityEndTime,
-			weeks: activeActivityRecurrenceWeeks,
-			multiDefs: activeActivityMultiDefs,
-		});
+		const freshInstances = generateRecurrenceInstances(
+			buildRecurrenceGenerationInput({
+				activityType: activeActivityType,
+				intervalStart: activeActivityIntervalStart,
+				intervalEnd: activeActivityIntervalEnd,
+				pattern: activeActivityRecurrencePattern,
+				interval: activeActivityRecurrenceInterval,
+				unit: activeActivityRecurrenceUnit,
+				days: activeActivityRecurrenceDays,
+				startTime: activeActivityStartTime,
+				endTime: activeActivityEndTime,
+				weeks: activeActivityRecurrenceWeeks,
+				multiDefs: normalizeMultiDefs(activeActivityMultiDefs),
+			})
+		);
 
 		const mergedInstances = freshInstances.map(fresh => {
 			// U multi-recurring párujeme podle data a sourceIdx
@@ -1199,10 +1200,11 @@ export default function KalendarApp() {
 			setActiveActivityRecurrenceWeeks(item.recurrenceWeeks || ['odd', 'even']);
 
 			// Načtení Multi-definitions
-			let loadedDefs = item.multiDefs || [];
-			if (item.activityType === 'multi_recurring' && loadedDefs.length === 0) {
-				loadedDefs = [{ startTime: "", endTime: "", title: "" }];
-			}
+			const loadedDefs =
+				item.activityType === "multi_recurring"
+					? normalizeMultiDefs(item.multiDefs)
+					: item.multiDefs || [];
+
 			setActiveActivityMultiDefs(loadedDefs);
 
 			lastRecurrenceSignature.current = JSON.stringify({
@@ -1453,6 +1455,11 @@ export default function KalendarApp() {
 				newRecurrenceInstances = [];
 			}
 
+			const normalizedMultiDefs =
+				activeActivityType === "multi_recurring"
+					? normalizeMultiDefs(activeActivityMultiDefs)
+					: [];
+
 			if (existingItem) {
 				setEvents(prev => updateTree(prev, activeActivityId, (item) => ({
 					...item,
@@ -1471,7 +1478,7 @@ export default function KalendarApp() {
 					recurrenceDays: activeActivityRecurrenceDays,
 					recurrenceWeeks: activeActivityRecurrenceWeeks,
 					recurrenceInstances: newRecurrenceInstances,
-					multiDefs: activeActivityMultiDefs, // Uložení definic
+					multiDefs: normalizedMultiDefs, // Uložení definic
 					linkedNoteIds: Array.from(tempActivityLinks)
 				})));
 			} else {
