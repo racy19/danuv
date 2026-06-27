@@ -5,7 +5,7 @@ import { defaultEvents } from './data/mockEvents';
 import { loadEvents, loadFromStorage, loadNotes, saveEvents, saveNotes, saveToStorage, STORAGE_KEYS } from './services/storageService';
 import { defaultSharedNotes } from './data/mockNotes';
 import { GROUP_ORDER_OPTIONS, INTERNAL_SORT_OPTIONS, isCustomSortingEnabled, sortAndGroupItems } from './utils/sortUtils';
-import { generateRecurrenceInstances } from './utils/recurrenceUtils';
+import { buildRecurrenceGenerationInput, createRecurrenceSignature, generateRecurrenceInstances, hasRecurrenceStructureChanged, sortRecurrenceInstances, validateRecurrence, validateSingleActivity } from './utils/recurrenceUtils';
 import { areSetsEqual } from './utils/commonUtils';
 import { AcitvityIcon } from './components/icons/ActivityIcon';
 import { CustomSortSelect } from './components/ui/CustomSortSelect';
@@ -165,39 +165,46 @@ export default function KalendarApp() {
 		}
 	}, [editingInstanceId]);
 
-	const getRecurrenceSignature = () => {
-		return JSON.stringify({
-			start: activeActivityIntervalStart,
-			end: activeActivityIntervalEnd,
+	const getRecurrenceSignature = () =>
+		createRecurrenceSignature({
+			intervalStart: activeActivityIntervalStart,
+			intervalEnd: activeActivityIntervalEnd,
 			pattern: activeActivityRecurrencePattern,
 			interval: activeActivityRecurrenceInterval,
 			unit: activeActivityRecurrenceUnit,
-			days: [...activeActivityRecurrenceDays].sort(),
+			days: activeActivityRecurrenceDays,
 			startTime: activeActivityStartTime,
 			endTime: activeActivityEndTime,
-			weeks: [...activeActivityRecurrenceWeeks].sort(),
-			multiDefs: activeActivityMultiDefs // Zahrnuto v podpisu
+			weeks: activeActivityRecurrenceWeeks,
+			multiDefs: activeActivityMultiDefs,
 		});
-	};
 
 	useEffect(() => {
 		if (isActivityEditorOpen && (activeActivityType === 'recurring' || activeActivityType === 'multi_recurring') && lastRecurrenceSignature.current) {
 			try {
-				const original = JSON.parse(lastRecurrenceSignature.current);
+				const original = parseRecurrenceSignature(lastRecurrenceSignature.current);
 
-				// Detekce pouze STRUKTURÁLNÍCH změn (změna počtu dnů, frekvence atd.)
-				const isStructurallyDifferent =
-					original.start !== activeActivityIntervalStart ||
-					original.end !== activeActivityIntervalEnd ||
-					original.pattern !== activeActivityRecurrencePattern ||
-					original.interval !== activeActivityRecurrenceInterval ||
-					original.unit !== activeActivityRecurrenceUnit ||
-					JSON.stringify(original.days) !== JSON.stringify([...activeActivityRecurrenceDays].sort()) ||
-					JSON.stringify(original.weeks || ['odd', 'even']) !== JSON.stringify([...activeActivityRecurrenceWeeks].sort()) ||
-					(original.multiDefs || []).length !== activeActivityMultiDefs.length;
+				if (!original) {
+					setRecurrenceNeedsUpdate(false);
+					return;
+				}
 
-				setRecurrenceNeedsUpdate(isStructurallyDifferent);
+				const changed = hasRecurrenceStructureChanged(original, {
+					intervalStart: activeActivityIntervalStart,
+					intervalEnd: activeActivityIntervalEnd,
+					pattern: activeActivityRecurrencePattern,
+					interval: activeActivityRecurrenceInterval,
+					unit: activeActivityRecurrenceUnit,
+					days: activeActivityRecurrenceDays,
+					startTime: activeActivityStartTime,
+					endTime: activeActivityEndTime,
+					weeks: activeActivityRecurrenceWeeks,
+					multiDefs: activeActivityMultiDefs,
+				});
+
+				setRecurrenceNeedsUpdate(changed);
 			} catch (err) {
+				console.error("Failed to parse last recurrence signature", err);
 				setRecurrenceNeedsUpdate(false);
 			}
 		} else {
@@ -260,18 +267,20 @@ export default function KalendarApp() {
 	]);
 
 	const handleManualRegeneration = () => {
-		const freshInstances = generateRecurrenceInstances(
-			activeActivityIntervalStart,
-			activeActivityIntervalEnd,
-			activeActivityRecurrencePattern,
-			activeActivityRecurrenceInterval,
-			activeActivityRecurrenceUnit,
-			activeActivityRecurrenceDays,
-			activeActivityStartTime,
-			activeActivityEndTime,
-			activeActivityRecurrenceWeeks,
-			activeActivityType === 'multi_recurring' ? activeActivityMultiDefs : []
-		);
+		const freshInstances = generateRecurrenceInstances
+		buildRecurrenceGenerationInput({
+			activityType: activeActivityType,
+			intervalStart: activeActivityIntervalStart,
+			intervalEnd: activeActivityIntervalEnd,
+			pattern: activeActivityRecurrencePattern,
+			interval: activeActivityRecurrenceInterval,
+			unit: activeActivityRecurrenceUnit,
+			days: activeActivityRecurrenceDays,
+			startTime: activeActivityStartTime,
+			endTime: activeActivityEndTime,
+			weeks: activeActivityRecurrenceWeeks,
+			multiDefs: activeActivityMultiDefs,
+		});
 
 		const mergedInstances = freshInstances.map(fresh => {
 			// U multi-recurring párujeme podle data a sourceIdx
@@ -296,6 +305,8 @@ export default function KalendarApp() {
 			}
 			return fresh;
 		});
+
+		console.log("Regenerating recurrence instances. Fresh:", freshInstances, "Merged:", mergedInstances);
 
 		setCurrentRecurrenceInstances(mergedInstances);
 		lastRecurrenceSignature.current = getRecurrenceSignature();
@@ -529,16 +540,19 @@ export default function KalendarApp() {
 			return evs.map(e => {
 				if ((e.activityType === 'recurring' || e.activityType === 'multi_recurring') && (!e.recurrenceInstances || e.recurrenceInstances.length === 0)) {
 					const instances = generateRecurrenceInstances(
-						e.intervalStart,
-						e.intervalEnd,
-						e.recurrencePattern,
-						e.recurrenceInterval || 1,
-						e.recurrenceUnit || 'day',
-						e.recurrenceDays || [],
-						e.startTime,
-						e.endTime,
-						e.recurrenceWeeks || ['odd', 'even'],
-						e.multiDefs || []
+						buildRecurrenceGenerationInput({
+							activityType: e.activityType,
+							intervalStart: e.intervalStart,
+							intervalEnd: e.intervalEnd,
+							pattern: e.recurrencePattern,
+							interval: e.recurrenceInterval || 1,
+							unit: e.recurrenceUnit || "day",
+							days: e.recurrenceDays || [],
+							startTime: e.startTime,
+							endTime: e.endTime,
+							weeks: e.recurrenceWeeks || ["odd", "even"],
+							multiDefs: e.multiDefs || [],
+						})
 					);
 
 					// PŘIDÁNO: Specifická data pro poslední lekci kurzu 4001
@@ -1399,64 +1413,35 @@ export default function KalendarApp() {
 			const sTime = activeActivityStartTime;
 			const eTime = activeActivityEndTime;
 
-			if (activeActivityType === 'multi_recurring') {
-				if (!activeActivityTitle || !activeActivityTitle.trim()) {
-					setWarningMsg("Nelze uložit: Vyplňte prosím název skupiny aktivit (červeně podbarvené pole).");
-					setTimeout(() => setWarningMsg(null), 5000);
-					return;
-				}
-				if (!activeActivityIntervalStart || !activeActivityIntervalEnd) {
-					setWarningMsg("Nelze uložit: Vyplňte prosím datum začátku i konce intervalu.");
-					setTimeout(() => setWarningMsg(null), 5000);
-					return;
-				}
-				if (activeActivityMultiDefs.some(def => !def.title || !def.title.trim())) {
-					setWarningMsg("Nelze uložit: Vyplňte prosím názvy u všech přidružených aktivit uvnitř rozvrhu.");
+			if (activeActivityType === "single") {
+				const singleActivityError = validateSingleActivity({
+					startDate: activeActivityStart,
+					endDate: activeActivityEnd,
+					startTime: activeActivityStartTime,
+					endTime: activeActivityEndTime,
+				});
+
+				if (singleActivityError) {
+					setWarningMsg(singleActivityError);
 					setTimeout(() => setWarningMsg(null), 5000);
 					return;
 				}
 			}
 
-			if (activeActivityType === 'single') {
-				if (!sDate && (eDate || eTime)) {
-					setWarningMsg("Nelze zadat konec události bez vyplněného data začátku!");
-					setTimeout(() => setWarningMsg(null), 5000);
-					return;
-				}
-				if (sDate && eDate) {
-					if (sDate > eDate) {
-						setWarningMsg("Datum konce nemůže být před datem začátku!");
-						setTimeout(() => setWarningMsg(null), 5000);
-						return;
-					}
-					if (sDate === eDate) {
-						if (sTime && eTime && sTime > eTime) {
-							setWarningMsg("Čas konce nemůže být před časem začátku!");
-							setTimeout(() => setWarningMsg(null), 5000);
-							return;
-						}
-					}
-				}
-			}
+			const recurrenceError = validateRecurrence({
+				activityType: activeActivityType,
+				title: activeActivityTitle,
+				intervalStart: activeActivityIntervalStart,
+				intervalEnd: activeActivityIntervalEnd,
+				multiDefs: activeActivityMultiDefs,
+				recurrenceNeedsUpdate,
+				generatedInstancesCount: currentRecurrenceInstances.length,
+			});
 
-			if (activeActivityType === 'recurring' || activeActivityType === 'multi_recurring') {
-				if (activeActivityIntervalStart && activeActivityIntervalEnd && activeActivityIntervalStart > activeActivityIntervalEnd) {
-					setWarningMsg("Konec intervalu nemůže být před jeho začátkem!");
-					setTimeout(() => setWarningMsg(null), 5000);
-					return;
-				}
-
-				if (recurrenceNeedsUpdate) {
-					setWarningMsg("Před uložením musíte vyřešit změnu intervalu (klikněte na 'Přegenerovat' nebo 'Vrátit změny').");
-					setTimeout(() => setWarningMsg(null), 5000);
-					return;
-				}
-
-				if (currentRecurrenceInstances.length === 0) {
-					setWarningMsg("Nelze uložit: Podle zadaných parametrů nebyly vygenerovány žádné výskyty aktivit.");
-					setTimeout(() => setWarningMsg(null), 5000);
-					return;
-				}
+			if (recurrenceError) {
+				setWarningMsg(recurrenceError);
+				setTimeout(() => setWarningMsg(null), 5000);
+				return;
 			}
 
 			const foundObj = findItemAndParent(events, activeActivityId);
@@ -3319,12 +3304,9 @@ export default function KalendarApp() {
 					const isRecurring = activeActivityType === 'recurring';
 					const isMultiRecurring = activeActivityType === 'multi_recurring';
 
-					const sortedInstancesForEditor = [...currentRecurrenceInstances].sort((a, b) => {
-						const dateA = a.date || "";
-						const dateB = b.date || "";
-						if (dateA !== dateB) return dateA.localeCompare(dateB);
-						return (a.startTime || "").localeCompare(b.startTime || "");
-					});
+					const sortedInstancesForEditor = sortRecurrenceInstances(
+						currentRecurrenceInstances
+					);
 
 					const sourceTotalsEditor = {};
 					sortedInstancesForEditor.forEach(i => {
@@ -3595,7 +3577,7 @@ export default function KalendarApp() {
 														let textColorClass = isSuppressed ? "text-slate-400" : (isModified ? "text-blue-900" : "text-slate-700");
 														const finalInputClass = isEditing ? inputEditClass : `bg-transparent border-transparent cursor-default pointer-events-none ${textColorClass}`;
 
-														const sDate = formatDateCZ(inst.date);
+														const sDate = inst.date instanceof Date ? formatDateCZ(inst.date) : inst.date || "";
 														const sTime = inst.startTime;
 														const eTime = inst.endTime;
 
@@ -3608,7 +3590,7 @@ export default function KalendarApp() {
 															d.setDate(d.getDate() + 1);
 															displayEndDateRaw = d.toISOString().split('T')[0];
 														}
-														const eDateStr = formatDateCZ(displayEndDateRaw);
+														const eDateStr = displayEndDateRaw instanceof Date ? formatDateCZ(displayEndDateRaw) : displayEndDateRaw || "";
 
 														let timeString = (inst.date !== displayEndDateRaw)
 															? `${sDate} ${sTime} - ${eDateStr} ${eTime}`

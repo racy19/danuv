@@ -1,4 +1,5 @@
 import type {
+	ActivityType,
 	MultiRecurringDefinition,
 	RecurrenceInstance,
 	RecurrencePattern,
@@ -238,6 +239,186 @@ const createInstancesForDate = ({
 	});
 };
 
+export type RecurrenceValidationInput = {
+	activityType: ActivityType;
+	title: string;
+	intervalStart: string;
+	intervalEnd: string;
+	multiDefs?: MultiRecurringDefinition[];
+	recurrenceNeedsUpdate?: boolean;
+	generatedInstancesCount?: number;
+};
+
+export const validateRecurrence = ({
+	activityType,
+	title,
+	intervalStart,
+	intervalEnd,
+	multiDefs = [],
+	recurrenceNeedsUpdate = false,
+	generatedInstancesCount = 0,
+}: RecurrenceValidationInput): string | null => {
+	if (activityType !== "recurring" && activityType !== "multi_recurring") {
+		return null;
+	}
+
+	if (activityType === "multi_recurring") {
+		if (!title.trim()) {
+			return "Nelze uložit: Vyplňte prosím název skupiny aktivit (červeně podbarvené pole).";
+		}
+
+		if (!intervalStart || !intervalEnd) {
+			return "Nelze uložit: Vyplňte prosím datum začátku i konce intervalu.";
+		}
+
+		if (multiDefs.some((def) => !def.title || !def.title.trim())) {
+			return "Nelze uložit: Vyplňte prosím názvy u všech přidružených aktivit uvnitř rozvrhu.";
+		}
+	}
+
+	if (intervalStart && intervalEnd && intervalStart > intervalEnd) {
+		return "Konec intervalu nemůže být před jeho začátkem!";
+	}
+
+	if (recurrenceNeedsUpdate) {
+		return "Před uložením musíte vyřešit změnu intervalu (klikněte na 'Přegenerovat' nebo 'Vrátit změny').";
+	}
+
+	if (generatedInstancesCount === 0) {
+		return "Nelze uložit: Podle zadaných parametrů nebyly vygenerovány žádné výskyty aktivit.";
+	}
+
+	return null;
+};
+
+export type SingleActivityValidationInput = {
+	startDate: string;
+	endDate: string;
+	startTime: string;
+	endTime: string;
+};
+
+export const validateSingleActivity = ({
+	startDate,
+	endDate,
+	startTime,
+	endTime,
+}: SingleActivityValidationInput): string | null => {
+	if (!startDate && (endDate || endTime)) {
+		return "Nelze zadat konec události bez vyplněného data začátku!";
+	}
+
+	if (startDate && endDate) {
+		if (startDate > endDate) {
+			return "Datum konce nemůže být před datem začátku!";
+		}
+
+		if (
+			startDate === endDate &&
+			startTime &&
+			endTime &&
+			startTime > endTime
+		) {
+			return "Čas konce nemůže být před časem začátku!";
+		}
+	}
+
+	return null;
+};
+
+export type RecurrenceSignatureInput = {
+	intervalStart: string;
+	intervalEnd: string;
+	pattern: RecurrencePattern;
+	interval: number;
+	unit: RecurrenceUnit;
+	days: number[];
+	startTime?: string;
+	endTime?: string;
+	weeks: WeekParity[];
+	multiDefs: MultiRecurringDefinition[];
+};
+
+export const createRecurrenceSignature = ({
+	intervalStart,
+	intervalEnd,
+	pattern,
+	interval,
+	unit,
+	days,
+	startTime = "",
+	endTime = "",
+	weeks,
+	multiDefs,
+}: RecurrenceSignatureInput): string => {
+	return JSON.stringify({
+		start: intervalStart,
+		end: intervalEnd,
+		pattern,
+		interval,
+		unit,
+		days: [...days].sort(),
+		startTime,
+		endTime,
+		weeks: [...weeks].sort(),
+		multiDefs,
+	});
+};
+
+export type RecurrenceSignatureData = {
+	start: string;
+	end: string;
+	pattern: RecurrencePattern;
+	interval: number;
+	unit: RecurrenceUnit;
+	days: number[];
+	startTime?: string;
+	endTime?: string;
+	weeks?: WeekParity[];
+	multiDefs?: MultiRecurringDefinition[];
+};
+
+export const parseRecurrenceSignature = (
+	signature: string
+): RecurrenceSignatureData | null => {
+	try {
+		return JSON.parse(signature) as RecurrenceSignatureData;
+	} catch {
+		return null;
+	}
+};
+
+export const hasRecurrenceStructureChanged = (
+	original: RecurrenceSignatureData,
+	current: RecurrenceSignatureInput
+): boolean => {
+	return (
+		original.start !== current.intervalStart ||
+		original.end !== current.intervalEnd ||
+		original.pattern !== current.pattern ||
+		original.interval !== current.interval ||
+		original.unit !== current.unit ||
+		JSON.stringify(original.days) !== JSON.stringify([...current.days].sort()) ||
+		JSON.stringify(original.weeks || ["odd", "even"]) !== JSON.stringify([...current.weeks].sort()) ||
+		(original.multiDefs || []).length !== current.multiDefs.length
+	);
+};
+
+export const sortRecurrenceInstances = (
+	instances: RecurrenceInstance[]
+): RecurrenceInstance[] => {
+	return [...instances].sort((a, b) => {
+		const dateA = a.date || "";
+		const dateB = b.date || "";
+
+		if (dateA !== dateB) {
+			return dateA.localeCompare(dateB);
+		}
+
+		return (a.startTime || "").localeCompare(b.startTime || "");
+	});
+};
+
 // --- Main generator of recurrence instances ---
 
 export interface GenerateRecurrenceInstancesParams {
@@ -286,6 +467,7 @@ export const generateRecurrenceInstances = ({
 }: GenerateRecurrenceInstancesParams): RecurrenceInstance[] => {
 	if (!startStr || !endStr) return [];
 
+	debugger
 	const start = new Date(startStr);
 	const end = new Date(endStr);
 	const instances: RecurrenceInstance[] = [];
@@ -331,4 +513,50 @@ export const generateRecurrenceInstances = ({
 		});
 	}
 	return instances;
+};
+
+export type RecurrenceEditorStateForGeneration = {
+	activityType: ActivityType;
+
+	intervalStart: string;
+	intervalEnd: string;
+
+	pattern: RecurrencePattern;
+	interval: number;
+	unit: RecurrenceUnit;
+
+	days: number[];
+
+	startTime?: string;
+	endTime?: string;
+
+	weeks: WeekParity[];
+	multiDefs: MultiRecurringDefinition[];
+};
+
+export const buildRecurrenceGenerationInput = ({
+	activityType,
+	intervalStart,
+	intervalEnd,
+	pattern,
+	interval,
+	unit,
+	days,
+	startTime,
+	endTime,
+	weeks,
+	multiDefs,
+}: RecurrenceEditorStateForGeneration): GenerateRecurrenceInstancesParams => {
+	return {
+		startStr: intervalStart,
+		endStr: intervalEnd,
+		pattern,
+		interval,
+		unit,
+		daysOfWeek: days,
+		baseStartTime: startTime,
+		baseEndTime: endTime,
+		weekParity: weeks,
+		multiDefs: activityType === "multi_recurring" ? multiDefs : [],
+	};
 };
