@@ -32,6 +32,10 @@ import { SingleActivityDateFields } from './components/events/activity-editor/re
 import { RecurrenceDateRange } from './components/events/activity-editor/recurrence/RecurrenceDateRange';
 import { RecurrencePatternEditor } from './components/events/activity-editor/recurrence/RecurrencePatternEditor';
 import { MultiRecurringDefsEditor } from './components/events/activity-editor/recurrence/MultiRecurringDefsEditor';
+import { RecurrenceInstancesList } from './components/events/activity-editor/recurrence/RecurrenceInstancesList';
+import { RecurrenceInstanceAttachments } from './components/events/activity-editor/recurrence/RecurrenceInstanceAttachments';
+import { RecurrenceInstanceRow } from './components/events/activity-editor/recurrence/RecurrenceInstanceRow';
+import { RecurrenceEditor } from './components/events/activity-editor/recurrence/RecurrenceEditor';
 
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
 // a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
@@ -3353,210 +3357,51 @@ export default function KalendarApp() {
 								/>
 
 								{(isRecurring || isMultiRecurring) ? (
-									<div className="animate-in fade-in slide-in-from-top-2 border-b border-blue-200 bg-blue-50/50 p-0 overflow-y-auto overflow-x-hidden w-full">
-										<RecurrenceDateRange
-											isMultiRecurring={isMultiRecurring}
-											startTime={activeActivityStartTime}
-											endTime={activeActivityEndTime}
-											intervalStart={activeActivityIntervalStart}
-											intervalEnd={activeActivityIntervalEnd}
-											onStartTimeChange={setActiveActivityStartTime}
-											onEndTimeChange={setActiveActivityEndTime}
-											onIntervalStartChange={setActiveActivityIntervalStart}
-											onIntervalEndChange={setActiveActivityIntervalEnd}
-										/>
-
-										<RecurrencePatternEditor
-											pattern={activeActivityRecurrencePattern}
-											interval={activeActivityRecurrenceInterval}
-											unit={activeActivityRecurrenceUnit}
-											days={activeActivityRecurrenceDays}
-											weeks={activeActivityRecurrenceWeeks}
-											onPatternChange={handleRecurrencePatternChange}
-											onIntervalChange={setActiveActivityRecurrenceInterval}
-											onUnitChange={setActiveActivityRecurrenceUnit}
-											onToggleDay={toggleRecurrenceDay}
-											onToggleWeek={toggleRecurrenceWeek}
-										/>
-
-										{/* NOVÁ SEKCE: MULTI-DEFINICE (Rozvrh) */}
-										{isMultiRecurring && (
-											<MultiRecurringDefsEditor
-												defs={activeActivityMultiDefs}
-												showNameHelp={showNameHelp}
-												nameHelpRef={nameHelpRef}
-												onDefsChange={setActiveActivityMultiDefs}
-												onShowNameHelpChange={setShowNameHelp}
-											/>
-										)}
-
-										<div className="h-px bg-blue-300 w-full my-3"></div>
-
-										<div className="flex flex-col w-full px-5 pb-5">
-											<label className="block text-[10px] font-bold text-blue-800 uppercase tracking-wide mb-2 text-left">
-												Seznam generovaných aktivit ({currentRecurrenceInstances.length})
-											</label>
-
-											{recurrenceNeedsUpdate && (
-												<div className="mb-2 bg-red-50 border border-red-200 text-red-800 px-3 py-2 rounded-lg text-xs flex items-center justify-between gap-2 shadow-sm animate-in fade-in slide-in-from-top-2 flex-wrap">
-													<div className="flex items-center gap-2 font-bold"><AlertTriangle className="w-4 h-4 text-red-600 shrink-0" /><span>Parametry rozvrhu se změnily!</span></div>
-													<div className="flex gap-2 shrink-0">
-														<button onClick={(e) => { e.stopPropagation(); handleManualRegeneration(); }} className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-900 rounded text-[10px] font-bold transition-colors flex items-center gap-1"><RefreshCw className="w-3 h-3" /> PŘEGENEROVAT VÝSKYTY</button>
-														<button onClick={handleRevertRecurrenceChanges} className="px-2 py-1 bg-white border border-red-200 hover:bg-red-50 text-red-700 rounded text-[10px] font-bold transition-colors flex items-center gap-1"><Undo className="w-3 h-3" /> VRÁTIT ZMĚNY</button>
-													</div>
-												</div>
-											)}
-
-											<div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto overflow-x-hidden pr-1 w-full">
-												{sortedInstancesForEditor.length > 0 ? (
-													sortedInstancesForEditor.map((inst, idx) => {
-														const isEditing = editingInstanceId === inst.id;
-														const isSuppressed = !!inst.isSuppressed;
-
-														const sIdx = inst._sourceIdx || 0;
-														if (!isSuppressed) {
-															sourceCurrentsEditor[sIdx] = (sourceCurrentsEditor[sIdx] || 0) + 1;
-														}
-														const currentDValue = isSuppressed ? "" : (sourceCurrentsEditor[sIdx] || "");
-														const totalSValue = isSuppressed ? "" : (sourceTotalsEditor[sIdx] || "");
-
-														let hasInstanceChanges = false;
-														if (isEditing) {
-															hasInstanceChanges =
-																instanceEditData.date !== inst.date ||
-																instanceEditData.endDate !== (inst.endDate || inst.date) ||
-																instanceEditData.startTime !== (inst.startTime || "") ||
-																instanceEditData.endTime !== (inst.endTime || "") ||
-																instanceEditData.title !== (inst.customTitle || activeActivityTitle || "");
-														}
-
-														const isModified = !!inst.isEdited;
-
-														let containerClass = "flex flex-1 items-start gap-1 p-2 rounded-lg border transition-all relative group min-w-0 w-full";
-														let checkBtnClass = "w-6 h-6 rounded flex items-center justify-center transition-colors shrink-0 shadow-inner";
-
-														if (isSuppressed) {
-															containerClass += " bg-slate-100";
-															if (isModified) containerClass += " border-yellow-500 border-2 shadow-sm";
-															else containerClass += " border-slate-300";
-															checkBtnClass += " border border-slate-300 bg-slate-50 cursor-not-allowed opacity-50 text-transparent";
-														}
-														else if (isEditing) {
-															containerClass += " bg-yellow-50 border-yellow-300 shadow-md";
-															checkBtnClass += " border border-yellow-300 bg-white text-transparent opacity-50";
-														}
-														else {
-															containerClass += " bg-blue-50";
-															if (isModified) containerClass += " border-yellow-500 border-2 shadow-sm";
-															else containerClass += " border-blue-200";
-
-															checkBtnClass += " bg-white border border-blue-200 hover:bg-blue-100";
-														}
-
-														const inputBaseClass = "rounded px-1 py-0.5 text-xs font-bold transition-all focus:outline-none focus:ring-1 focus:ring-yellow-500 shadow-sm min-h-[24px]";
-														const inputEditClass = "bg-white border border-yellow-300 text-slate-800";
-														let textColorClass = isSuppressed ? "text-slate-400" : (isModified ? "text-blue-900" : "text-slate-700");
-														const finalInputClass = isEditing ? inputEditClass : `bg-transparent border-transparent cursor-default pointer-events-none ${textColorClass}`;
-
-														const sDate = inst.date instanceof Date ? formatDateCZ(inst.date) : inst.date || "";
-														const sTime = inst.startTime;
-														const eTime = inst.endTime;
-
-														const rawTitle = inst.customTitle || (isMultiRecurring ? "Bez názvu" : activeActivityTitle || "Bez názvu");
-														const title = isSuppressed ? rawTitle : rawTitle.replace(/<d>/g, currentDValue).replace(/<s>/g, totalSValue).replace(/<n>/g, activeActivityTitle || "");
-
-														let displayEndDateRaw = inst.endDate || inst.date;
-														if (sTime && eTime && sTime > eTime && inst.date === displayEndDateRaw) {
-															const d = new Date(inst.date);
-															d.setDate(d.getDate() + 1);
-															displayEndDateRaw = d.toISOString().split('T')[0];
-														}
-														const eDateStr = displayEndDateRaw instanceof Date ? formatDateCZ(displayEndDateRaw) : displayEndDateRaw || "";
-
-														let timeString = (inst.date !== displayEndDateRaw)
-															? `${sDate} ${sTime} - ${eDateStr} ${eTime}`
-															: (sTime && eTime ? `${sDate} ${sTime} - ${eTime}` : (sTime ? `${sDate} ${sTime}` : sDate));
-
-														return (
-															<div key={inst.id} className="flex items-start gap-0.5 w-full min-w-0">
-																<div className={containerClass}>
-																	<button
-																		onClick={() => !isSuppressed && !isEditing && toggleRecurrenceInstanceComplete(inst.id)}
-																		disabled={isSuppressed || isEditing}
-																		className={checkBtnClass}
-																	>
-																		{!isSuppressed && !isEditing && (
-																			inst.completed ?
-																				<Check className="w-4 h-4 text-green-600" strokeWidth={3} /> :
-																				<X className="w-4 h-4 text-red-500" strokeWidth={3} />
-																		)}
-																	</button>
-
-																	{isEditing ? (
-																		<div className="flex flex-wrap items-center gap-1 flex-1 min-w-0">
-																			<input type="date" value={instanceEditData.date} onChange={(e) => setInstanceEditData({ ...instanceEditData, date: e.target.value })} className={`${inputBaseClass} ${finalInputClass} w-24`} />
-																			<input type="time" value={instanceEditData.startTime} onChange={(e) => setInstanceEditData({ ...instanceEditData, startTime: e.target.value })} className={`${inputBaseClass} ${finalInputClass} w-[72px] text-center px-0`} />
-																			<ArrowRight className={`w-3 h-3 shrink-0 ${isSuppressed ? 'text-slate-300' : 'text-yellow-600'}`} />
-																			<input type="date" value={instanceEditData.endDate} onChange={(e) => setInstanceEditData({ ...instanceEditData, endDate: e.target.value })} className={`${inputBaseClass} ${finalInputClass} w-24`} />
-																			<input type="time" value={instanceEditData.endTime} onChange={(e) => setInstanceEditData({ ...instanceEditData, endTime: e.target.value })} className={`${inputBaseClass} ${finalInputClass} w-[72px] text-center px-0`} />
-																			<textarea ref={activeInstanceTextareaRef} value={instanceEditData.title} onChange={(e) => setInstanceEditData({ ...instanceEditData, title: e.target.value })} className={`${inputBaseClass} ${finalInputClass} flex-1 min-w-[120px] resize-none overflow-hidden leading-normal`} rows={1} onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight + 2) + 'px'; }} />
-																			<div className="flex gap-1 ml-auto shrink-0">
-																				{hasInstanceChanges && <button onClick={saveEditingInstance} className="p-1 bg-yellow-400 hover:bg-yellow-50 text-yellow-900 rounded shadow-sm animate-in zoom-in duration-200"><Save className="w-3.5 h-3.5" /></button>}
-																				<button onClick={cancelEditingInstance} className="p-1 bg-white border border-yellow-300 text-slate-500 hover:text-red-600 rounded shadow-sm"><X className="w-3.5 h-3.5" /></button>
-																			</div>
-																		</div>
-																	) : (
-																		<>
-																			<div className={`py-1 px-1 flex-1 flex flex-col justify-center min-w-0 ${textColorClass}`}>
-																				<div className="text-xs font-bold leading-normal whitespace-pre-wrap break-words">{timeString} {title}</div>
-																				{((inst.linkedNoteIds && inst.linkedNoteIds.length > 0) || (inst.subtasks && inst.subtasks.length > 0)) && (
-																					<div className="flex flex-wrap gap-1 mt-1.5">
-																						{inst.subtasks && inst.subtasks.map(sub => {
-																							const chipClass = sub.completed ? 'bg-slate-100 text-slate-500 border-slate-300' : 'bg-blue-50 text-blue-900 border-blue-200';
-																							const iconClass = sub.completed ? 'text-slate-400' : 'text-blue-700';
-																							return (
-																								<span key={sub.id} className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[10px] border h-auto relative z-20 ${chipClass}`}>
-																									<div className={`w-4 h-4 flex items-center justify-center rounded-sm shrink-0 -ml-0.5`}>
-																										{sub.completed ? <Check className="w-3 h-3 text-green-600" strokeWidth={3} /> : <X className="w-3 h-3 text-red-500" strokeWidth={3} />}
-																									</div>
-																									<span className="w-px h-3 bg-current opacity-20 mx-0.5"></span>
-																									<CalendarIcon className={`w-3 h-3 shrink-0 ${iconClass}`} />
-																									<span className={`whitespace-normal text-left break-words font-medium leading-none ${sub.completed ? 'line-through opacity-75' : ''}`}>{sub.title || "Bez názvu"}</span>
-																								</span>
-																							);
-																						})}
-																						{inst.linkedNoteIds && inst.linkedNoteIds.map(noteId => {
-																							const chipClass = "bg-yellow-50 text-yellow-800 border-yellow-200";
-																							const iconClass = "text-yellow-600";
-																							return (
-																								<span key={noteId} className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[10px] border h-auto relative z-20 ${chipClass}`}>
-																									<div className="w-3.5 h-3.5 shrink-0"></div>
-																									<span className="w-px h-3 bg-current opacity-20 mx-0.5"></span>
-																									<StickyNote className={`w-3 h-3 shrink-0 ${iconClass}`} />
-																									<span onClick={(e) => { e.stopPropagation(); handleOpenNoteEditor(noteId); }} className="whitespace-normal text-left break-words cursor-pointer hover:bg-black/10 rounded px-1 -mx-1 transition-colors font-medium leading-none">{sharedNotes[noteId]?.title || "Poznámka"}</span>
-																								</span>
-																							);
-																						})}
-																					</div>
-																				)}
-																			</div>
-																			<div className="absolute right-1 top-[3px] flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-1 rounded-md border border-slate-200 z-10">
-																				{isModified && <button onClick={(e) => restoreRecurrenceInstance(e, inst.id)} className="p-1.5 hover:bg-yellow-100 text-yellow-600 rounded transition-colors"><RotateCw className="w-3.5 h-3.5" /></button>}
-																				<button onClick={(e) => { e.stopPropagation(); startEditingInstance(inst); }} className="p-1.5 hover:bg-blue-100 text-slate-500 rounded transition-colors"><Edit3 className="w-3.5 h-3.5" /></button>
-																				<button onClick={(e) => { e.stopPropagation(); toggleRecurrenceInstanceSuppression(inst.id); }} className={`p-1.5 rounded transition-colors ${isSuppressed ? 'hover:bg-green-100 text-slate-500' : 'hover:bg-slate-100 text-slate-500'}`}>{isSuppressed ? <Eye className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}</button>
-																			</div>
-																		</>
-																	)}
-																</div>
-															</div>
-														);
-													})
-												) : (
-													<div className="text-center py-4 text-slate-400 italic text-xs">Zatím nejsou vygenerovány žádné výskyty.</div>
-												)}
-											</div>
-										</div>
-									</div>
+									<RecurrenceEditor
+										isMultiRecurring={isMultiRecurring}
+										startTime={activeActivityStartTime}
+										endTime={activeActivityEndTime}
+										intervalStart={activeActivityIntervalStart}
+										intervalEnd={activeActivityIntervalEnd}
+										pattern={activeActivityRecurrencePattern}
+										interval={activeActivityRecurrenceInterval}
+										unit={activeActivityRecurrenceUnit}
+										days={activeActivityRecurrenceDays}
+										weeks={activeActivityRecurrenceWeeks}
+										multiDefs={activeActivityMultiDefs}
+										currentInstances={currentRecurrenceInstances}
+										sortedInstances={sortedInstancesForEditor}
+										sourceTotals={sourceTotalsEditor}
+										recurrenceNeedsUpdate={recurrenceNeedsUpdate}
+										editingInstanceId={editingInstanceId}
+										instanceEditData={instanceEditData}
+										activeActivityTitle={activeActivityTitle}
+										sharedNotes={sharedNotes}
+										showNameHelp={showNameHelp}
+										nameHelpRef={nameHelpRef}
+										activeInstanceTextareaRef={activeInstanceTextareaRef}
+										onStartTimeChange={setActiveActivityStartTime}
+										onEndTimeChange={setActiveActivityEndTime}
+										onIntervalStartChange={setActiveActivityIntervalStart}
+										onIntervalEndChange={setActiveActivityIntervalEnd}
+										onPatternChange={handleRecurrencePatternChange}
+										onIntervalChange={setActiveActivityRecurrenceInterval}
+										onUnitChange={setActiveActivityRecurrenceUnit}
+										onToggleDay={toggleRecurrenceDay}
+										onToggleWeek={toggleRecurrenceWeek}
+										onMultiDefsChange={setActiveActivityMultiDefs}
+										onShowNameHelpChange={setShowNameHelp}
+										onRegenerate={handleManualRegeneration}
+										onRevertChanges={handleRevertRecurrenceChanges}
+										onToggleComplete={toggleRecurrenceInstanceComplete}
+										onEditDataChange={setInstanceEditData}
+										onSaveEdit={saveEditingInstance}
+										onCancelEdit={cancelEditingInstance}
+										onStartEdit={startEditingInstance}
+										onRestore={restoreRecurrenceInstance}
+										onToggleSuppression={toggleRecurrenceInstanceSuppression}
+										onOpenNote={handleOpenNoteEditor}
+									/>
 								) : <SingleActivityDateFields
 									startDate={activeActivityStart}
 									endDate={activeActivityEnd}
