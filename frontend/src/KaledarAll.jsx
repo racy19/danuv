@@ -18,6 +18,7 @@ import { ActivityAttachments } from './components/events/activity-editor/Activit
 import { SingleActivityDateFields } from './components/events/activity-editor/recurrence/SingleActivityDateFields';
 import { RecurrenceEditor } from './components/events/activity-editor/recurrence/RecurrenceEditor';
 import { ActivityEditorModal } from './components/events/activity-editor/ActivityEditorModal';
+import { ActivityEditorRenderer } from './components/events/activity-editor/ActivityEditorRenderer';
 
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
 // a nic nefunguje, ale nechci to jen tak smazat, kdyz to tam je a ja nevim proc
@@ -2831,7 +2832,7 @@ export default function KalendarApp() {
 	// console.log(loadFromStorage("calendarAppV8_ShowStats", {}));
 	// console.log(loadFromStorage("calendarAppV8_ListSort", {}));
 
-	resetStorage();
+	// resetStorage();
 
 	return (
 		<div className="min-h-screen bg-[#f8faff] py-8 px-4 font-sans text-slate-800">
@@ -3045,195 +3046,89 @@ export default function KalendarApp() {
 					);
 				})()}
 
-				{isActivityEditorOpen && (() => {
-					const noteResults = Object.values(sharedNotes).filter(n => n.title.toLowerCase().includes(linkSearchQuery.toLowerCase())).map(n => ({ ...n, _type: 'note' }));
-					const projectResults = events.filter(e => e.type === 'project' && e.title.toLowerCase().includes(linkSearchQuery.toLowerCase())).map(p => ({ ...p, _type: 'project' }));
-					const searchResults = [...noteResults, ...projectResults];
-
-					const allAttachments = Array.from(tempActivityLinks).map(id => {
-						const note = sharedNotes[id];
-						if (note) return { ...note, _type: 'note' };
-						const project = events.find(e => e.id === id && e.type === 'project');
-						if (project) return { ...project, _type: 'project' };
-						return null;
-					}).filter(Boolean);
-
-					const foundObj = findItemAndParent(events, activeActivityId);
-					const originalActivity = foundObj ? foundObj.item : null;
-					const originalLinks = new Set(originalActivity ? (originalActivity.linkedNoteIds || []) : []);
-
-					const originalInstancesStr = JSON.stringify(originalActivity ? (originalActivity.recurrenceInstances || []) : []);
-					const currentInstancesStr = JSON.stringify(currentRecurrenceInstances);
-					const instancesChanged = originalInstancesStr !== currentInstancesStr;
-
-					const isNewActivity = !originalActivity;
-
-					const baseChanges = isNewActivity ? false : (
-						activeActivityTitle !== (originalActivity.title || "") ||
-						activeActivityStart !== (originalActivity.start || "") ||
-						activeActivityEnd !== (originalActivity.end || "") ||
-						activeActivityStartTime !== (originalActivity.startTime || "") ||
-						activeActivityEndTime !== (originalActivity.endTime || "") ||
-						activeActivityCompleted !== (originalActivity.completed || false) ||
-						activeActivityType !== (originalActivity.activityType || 'single') ||
-						!areSetsEqual(tempActivityLinks, originalLinks) ||
-						Object.keys(tempStatusChanges).length > 0
-					);
-
-					const recurringChanges = (activeActivityType === 'recurring' || activeActivityType === 'multi_recurring') && !isNewActivity ? (
-						activeActivityIntervalStart !== (originalActivity.intervalStart || "") ||
-						activeActivityIntervalEnd !== (originalActivity.intervalEnd || "") ||
-						activeActivityRecurrencePattern !== (originalActivity.recurrencePattern || 'daily') ||
-						activeActivityRecurrenceInterval !== (originalActivity.recurrenceInterval || 1) ||
-						activeActivityRecurrenceUnit !== (originalActivity.recurrenceUnit || 'day') ||
-						!areSetsEqual(new Set(activeActivityRecurrenceDays), new Set(originalActivity.recurrenceDays || [])) ||
-						!areSetsEqual(new Set(activeActivityRecurrenceWeeks), new Set(originalActivity.recurrenceWeeks || ['odd', 'even'])) ||
-						instancesChanged ||
-						JSON.stringify(activeActivityMultiDefs) !== JSON.stringify(originalActivity.multiDefs || [])
-					) : false;
-
-					const hasChanges = isNewActivity ?
-						(activeActivityTitle.length > 0 || instancesChanged || (activeActivityType === 'multi_recurring' && (!!activeActivityIntervalStart || !!activeActivityIntervalEnd || activeActivityMultiDefs.some(d => !!d.title || !!d.startTime || !!d.endTime))))
-						: (baseChanges || recurringChanges);
-
-					const isRecurring = activeActivityType === 'recurring';
-					const isMultiRecurring = activeActivityType === 'multi_recurring';
-
-					const sortedInstancesForEditor = sortRecurrenceInstances(
-						currentRecurrenceInstances
-					);
-
-					const sourceTotalsEditor = {};
-					sortedInstancesForEditor.forEach(i => {
-						if (!i.isSuppressed) {
-							const sIdx = i._sourceIdx || 0;
-							sourceTotalsEditor[sIdx] = (sourceTotalsEditor[sIdx] || 0) + 1;
-						}
-					});
-
-					const sourceCurrentsEditor = {};
-
-					const activityEditorModalProps = {
-						isOpen: isActivityEditorOpen,
-						onClose: () => setIsActivityEditorOpen(false),
-						contentRef: activityEditorRef,
-						zIndexStyle: { zIndex: editorZIndices.activity },
-
-						headerProps: {
-							activityType: activeActivityType,
-							multiDefs: activeActivityMultiDefs,
-							hasChanges,
-							onActivityTypeChange: setActiveActivityType,
-							onMultiDefsChange: setActiveActivityMultiDefs,
-							onSave: handleSaveActivity,
-						},
-
-						basicFieldsProps: {
-							title: activeActivityTitle,
-							completed: activeActivityCompleted,
-							showNameHelp,
-							nameHelpRef,
-							titleRef: activityTitleRef,
-							onTitleChange: setActiveActivityTitle,
-							onCompletedChange: setActiveActivityCompleted,
-							onShowNameHelpChange: setShowNameHelp,
-						},
-
-						attachmentsProps: {
-							show: activeActivityType === "single",
-							attachments: allAttachments,
-							searchResults,
-							linkedIds: tempActivityLinks,
-							searchQuery: linkSearchQuery,
-							isDropdownOpen: isLinkDropdownOpen,
-							dropdownRef: activityLinkDropdownRef,
-							onSearchQueryChange: setLinkSearchQuery,
-							onOpenDropdown: () => setIsLinkDropdownOpen(true),
-							onToggleAttachment: handleInlineNoteToggleForActivity,
-							onOpenNote: handleOpenNoteEditor,
-							onOpenProject: handleOpenProjectEditor,
-						},
-					};
-
-					const recurrenceEditorProps = {
-						isMultiRecurring,
+				<ActivityEditorRenderer
+					isActivityEditorOpen={isActivityEditorOpen}
+					sharedNotes={sharedNotes}
+					events={events}
+					linkSearchQuery={linkSearchQuery}
+					tempActivityLinks={tempActivityLinks}
+					findItemAndParent={findItemAndParent}
+					currentRecurrenceInstances={currentRecurrenceInstances}
+					activityState={{
+						id: activeActivityId,
+						title: activeActivityTitle,
+						start: activeActivityStart,
+						end: activeActivityEnd,
 						startTime: activeActivityStartTime,
 						endTime: activeActivityEndTime,
+						completed: activeActivityCompleted,
+						type: activeActivityType,
+
 						intervalStart: activeActivityIntervalStart,
 						intervalEnd: activeActivityIntervalEnd,
-
-						pattern: activeActivityRecurrencePattern,
-						interval: activeActivityRecurrenceInterval,
-						unit: activeActivityRecurrenceUnit,
-						days: activeActivityRecurrenceDays,
-						weeks: activeActivityRecurrenceWeeks,
-
+						recurrencePattern: activeActivityRecurrencePattern,
+						recurrenceInterval: activeActivityRecurrenceInterval,
+						recurrenceUnit: activeActivityRecurrenceUnit,
+						recurrenceDays: activeActivityRecurrenceDays,
+						recurrenceWeeks: activeActivityRecurrenceWeeks,
 						multiDefs: activeActivityMultiDefs,
-
-						currentInstances: currentRecurrenceInstances,
-						sortedInstances: sortedInstancesForEditor,
-						sourceTotals: sourceTotalsEditor,
-
-						recurrenceNeedsUpdate,
-
-						editingInstanceId,
-						instanceEditData,
-						activeActivityTitle,
-						sharedNotes,
-
-						showNameHelp,
-						nameHelpRef,
-						activeInstanceTextareaRef,
-
-						onStartTimeChange: setActiveActivityStartTime,
-						onEndTimeChange: setActiveActivityEndTime,
-						onIntervalStartChange: setActiveActivityIntervalStart,
-						onIntervalEndChange: setActiveActivityIntervalEnd,
-
-						onPatternChange: handleRecurrencePatternChange,
-						onIntervalChange: setActiveActivityRecurrenceInterval,
-						onUnitChange: setActiveActivityRecurrenceUnit,
-						onToggleDay: toggleRecurrenceDay,
-						onToggleWeek: toggleRecurrenceWeek,
-
-						onMultiDefsChange: setActiveActivityMultiDefs,
-						onShowNameHelpChange: setShowNameHelp,
-
-						onRegenerate: handleManualRegeneration,
-						onRevertChanges: handleRevertRecurrenceChanges,
-
-						onToggleComplete: toggleRecurrenceInstanceComplete,
-						onEditDataChange: setInstanceEditData,
-						onSaveEdit: saveEditingInstance,
-						onCancelEdit: cancelEditingInstance,
-						onStartEdit: startEditingInstance,
-						onRestore: restoreRecurrenceInstance,
-						onToggleSuppression: toggleRecurrenceInstanceSuppression,
-						onOpenNote: handleOpenNoteEditor,
-					};
-
-					return (
-						<ActivityEditorModal
-							{...activityEditorModalProps}
-							body={
-								(isRecurring || isMultiRecurring) ? (
-									<RecurrenceEditor {...recurrenceEditorProps} />
-								) : (
-									<SingleActivityDateFields
-										startDate={activeActivityStart}
-										endDate={activeActivityEnd}
-										startTime={activeActivityStartTime}
-										endTime={activeActivityEndTime}
-										onStartDateChange={setActiveActivityStart}
-										onEndDateChange={setActiveActivityEnd}
-										onStartTimeChange={setActiveActivityStartTime}
-										onEndTimeChange={setActiveActivityEndTime}
-									/>
-								)
-							}
-						/>
-					);
-				})()}
+					}}
+					activitySetters={{
+						setTitle: setActiveActivityTitle,
+						setStart: setActiveActivityStart,
+						setEnd: setActiveActivityEnd,
+						setStartTime: setActiveActivityStartTime,
+						setEndTime: setActiveActivityEndTime,
+						setCompleted: setActiveActivityCompleted,
+						setType: setActiveActivityType,
+						setIntervalStart: setActiveActivityIntervalStart,
+						setIntervalEnd: setActiveActivityIntervalEnd,
+						setRecurrenceInterval: setActiveActivityRecurrenceInterval,
+						setRecurrenceUnit: setActiveActivityRecurrenceUnit,
+						setMultiDefs: setActiveActivityMultiDefs,
+					}}
+					activeActivityIntervalStart={activeActivityIntervalStart}
+					activeActivityIntervalEnd={activeActivityIntervalEnd}
+					activeActivityRecurrencePattern={activeActivityRecurrencePattern}
+					activeActivityRecurrenceInterval={activeActivityRecurrenceInterval}
+					activeActivityRecurrenceUnit={activeActivityRecurrenceUnit}
+					activeActivityRecurrenceDays={activeActivityRecurrenceDays}
+					activeActivityRecurrenceWeeks={activeActivityRecurrenceWeeks}
+					activeActivityMultiDefs={activeActivityMultiDefs}
+					tempStatusChanges={tempStatusChanges}
+					areSetsEqual={areSetsEqual}
+					editorZIndices={editorZIndices}
+					activityEditorRef={activityEditorRef}
+					setIsActivityEditorOpen={setIsActivityEditorOpen}
+					showNameHelp={showNameHelp}
+					nameHelpRef={nameHelpRef}
+					activityTitleRef={activityTitleRef}
+					setShowNameHelp={setShowNameHelp}
+					handleSaveActivity={handleSaveActivity}
+					isLinkDropdownOpen={isLinkDropdownOpen}
+					activityLinkDropdownRef={activityLinkDropdownRef}
+					setLinkSearchQuery={setLinkSearchQuery}
+					setIsLinkDropdownOpen={setIsLinkDropdownOpen}
+					handleInlineNoteToggleForActivity={handleInlineNoteToggleForActivity}
+					handleOpenNoteEditor={handleOpenNoteEditor}
+					handleOpenProjectEditor={handleOpenProjectEditor}
+					recurrenceNeedsUpdate={recurrenceNeedsUpdate}
+					editingInstanceId={editingInstanceId}
+					instanceEditData={instanceEditData}
+					activeInstanceTextareaRef={activeInstanceTextareaRef}
+					handleRecurrencePatternChange={handleRecurrencePatternChange}
+					toggleRecurrenceDay={toggleRecurrenceDay}
+					toggleRecurrenceWeek={toggleRecurrenceWeek}
+					handleManualRegeneration={handleManualRegeneration}
+					handleRevertRecurrenceChanges={handleRevertRecurrenceChanges}
+					toggleRecurrenceInstanceComplete={toggleRecurrenceInstanceComplete}
+					setInstanceEditData={setInstanceEditData}
+					saveEditingInstance={saveEditingInstance}
+					cancelEditingInstance={cancelEditingInstance}
+					startEditingInstance={startEditingInstance}
+					restoreRecurrenceInstance={restoreRecurrenceInstance}
+					toggleRecurrenceInstanceSuppression={toggleRecurrenceInstanceSuppression}
+				/>
 			</div>
 		</div>
 	);

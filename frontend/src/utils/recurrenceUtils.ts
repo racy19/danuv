@@ -588,3 +588,24 @@ export const normalizeMultiDefs = (
 
 	return normalized;
 };
+
+export const getRecurrenceEditorData = (
+	instances: RecurrenceInstance[]
+) => {
+	const sortedInstances = sortRecurrenceInstances(instances);
+
+	const sourceTotals: Record<number, number> = {};
+
+	sortedInstances.forEach((instance) => {
+		if (!instance.isSuppressed) {
+			const sourceIndex = instance._sourceIdx || 0;
+			sourceTotals[sourceIndex] =
+				(sourceTotals[sourceIndex] || 0) + 1;
+		}
+	});
+
+	return {
+		sortedInstances,
+		sourceTotals,
+	};
+};
