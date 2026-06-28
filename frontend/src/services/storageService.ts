@@ -48,6 +48,13 @@ export const saveToStorage = <T>(key: string, value: T): void => {
 	}
 };
 
+export const resetStorage = () => {
+	saveToStorage(STORAGE_KEYS.events, defaultEvents);
+	saveToStorage(STORAGE_KEYS.notes, defaultSharedNotes);
+	saveToStorage(STORAGE_KEYS.showStats, true);
+	saveToStorage(STORAGE_KEYS.listSort, undefined);
+}
+
 // --- Helpers for specific data types ---
 export const loadEvents = () =>
 	loadFromStorage(STORAGE_KEYS.events, defaultEvents);

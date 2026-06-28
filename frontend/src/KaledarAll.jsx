@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Check, Calendar as CalendarIcon, List, X, Save, StickyNote, Database, Info, HelpCircle, Settings, ArrowUpDown, Download, Upload, FileDown, FileUp, ShieldAlert, Folder, Search, Eye, EyeOff, Pin, MoreHorizontal, RotateCw } from 'lucide-react';
 import { DAY_NAMES_SHORT, getDateStr, getDayName, getTodayStr } from './utils/dateUtils';
-import { loadEvents, loadFromStorage, loadNotes, saveEvents, saveNotes, saveToStorage, STORAGE_KEYS } from './services/storageService';
+import { loadEvents, loadFromStorage, loadNotes, resetStorage, saveEvents, saveNotes, saveToStorage, STORAGE_KEYS } from './services/storageService';
 import { defaultSharedNotes } from './data/mockNotes';
 import { GROUP_ORDER_OPTIONS, INTERNAL_SORT_OPTIONS, sortAndGroupItems } from './utils/sortUtils';
 import { buildRecurrenceGenerationInput, createRecurrenceSignature, generateRecurrenceInstances, hasRecurrenceStructureChanged, normalizeMultiDefs, parseRecurrenceSignature, sortRecurrenceInstances, validateRecurrence, validateSingleActivity } from './utils/recurrenceUtils';
@@ -2826,6 +2826,13 @@ export default function KalendarApp() {
 		</div>
 	);
 
+	// console.log(loadFromStorage("calendarAppV8_Demo_v7", {}));
+	// console.log(loadFromStorage("calendarAppV8_Notes_v7", {}));
+	// console.log(loadFromStorage("calendarAppV8_ShowStats", {}));
+	// console.log(loadFromStorage("calendarAppV8_ListSort", {}));
+
+	resetStorage();
+
 	return (
 		<div className="min-h-screen bg-[#f8faff] py-8 px-4 font-sans text-slate-800">
 			<div className="max-w-5xl mx-auto relative">
@@ -3112,30 +3119,7 @@ export default function KalendarApp() {
 							onClose={() => setIsActivityEditorOpen(false)}
 							contentRef={activityEditorRef}
 							zIndexStyle={{ zIndex: editorZIndices.activity }}
-						>
-							<ActivityEditorHeader
-								activityType={activeActivityType}
-								multiDefs={activeActivityMultiDefs}
-								hasChanges={hasChanges}
-								onActivityTypeChange={setActiveActivityType}
-								onMultiDefsChange={setActiveActivityMultiDefs}
-								onSave={handleSaveActivity}
-								onClose={() => setIsActivityEditorOpen(false)}
-							/>
-
-							<ActivityEditorBasicFields
-								activityType={activeActivityType}
-								title={activeActivityTitle}
-								completed={activeActivityCompleted}
-								showNameHelp={showNameHelp}
-								nameHelpRef={nameHelpRef}
-								titleRef={activityTitleRef}
-								onTitleChange={setActiveActivityTitle}
-								onCompletedChange={setActiveActivityCompleted}
-								onShowNameHelpChange={setShowNameHelp}
-							/>
-
-							{(isRecurring || isMultiRecurring) ? (
+							body={(isRecurring || isMultiRecurring) ? (
 								<RecurrenceEditor
 									isMultiRecurring={isMultiRecurring}
 									startTime={activeActivityStartTime}
@@ -3191,23 +3175,39 @@ export default function KalendarApp() {
 								onStartTimeChange={setActiveActivityStartTime}
 								onEndTimeChange={setActiveActivityEndTime}
 							/>}
-
-							{activeActivityType === "single" && (
-								<ActivityAttachments
-									attachments={allAttachments}
-									searchResults={searchResults}
-									linkedIds={tempActivityLinks}
-									searchQuery={linkSearchQuery}
-									isDropdownOpen={isLinkDropdownOpen}
-									dropdownRef={activityLinkDropdownRef}
-									onSearchQueryChange={setLinkSearchQuery}
-									onOpenDropdown={() => setIsLinkDropdownOpen(true)}
-									onToggleAttachment={handleInlineNoteToggleForActivity}
-									onOpenNote={handleOpenNoteEditor}
-									onOpenProject={handleOpenProjectEditor}
-								/>
-							)}
-						</ActivityEditorModal>
+							headerProps={{
+								activityType: activeActivityType,
+								multiDefs: activeActivityMultiDefs,
+								hasChanges,
+								onActivityTypeChange: setActiveActivityType,
+								onMultiDefsChange: setActiveActivityMultiDefs,
+								onSave: handleSaveActivity,
+							}}
+							basicFieldsProps={{
+								title: activeActivityTitle,
+								completed: activeActivityCompleted,
+								showNameHelp,
+								nameHelpRef,
+								titleRef: activityTitleRef,
+								onTitleChange: setActiveActivityTitle,
+								onCompletedChange: setActiveActivityCompleted,
+								onShowNameHelpChange: setShowNameHelp,
+							}}
+							attachmentsProps={{
+								show: activeActivityType === "single",
+								attachments: allAttachments,
+								searchResults,
+								linkedIds: tempActivityLinks,
+								searchQuery: linkSearchQuery,
+								isDropdownOpen: isLinkDropdownOpen,
+								dropdownRef: activityLinkDropdownRef,
+								onSearchQueryChange: setLinkSearchQuery,
+								onOpenDropdown: () => setIsLinkDropdownOpen(true),
+								onToggleAttachment: handleInlineNoteToggleForActivity,
+								onOpenNote: handleOpenNoteEditor,
+								onOpenProject: handleOpenProjectEditor,
+							}}
+						/>
 					);
 				})()}
 			</div>
