@@ -3113,100 +3113,124 @@ export default function KalendarApp() {
 
 					const sourceCurrentsEditor = {};
 
+					const activityEditorModalProps = {
+						isOpen: isActivityEditorOpen,
+						onClose: () => setIsActivityEditorOpen(false),
+						contentRef: activityEditorRef,
+						zIndexStyle: { zIndex: editorZIndices.activity },
+
+						headerProps: {
+							activityType: activeActivityType,
+							multiDefs: activeActivityMultiDefs,
+							hasChanges,
+							onActivityTypeChange: setActiveActivityType,
+							onMultiDefsChange: setActiveActivityMultiDefs,
+							onSave: handleSaveActivity,
+						},
+
+						basicFieldsProps: {
+							title: activeActivityTitle,
+							completed: activeActivityCompleted,
+							showNameHelp,
+							nameHelpRef,
+							titleRef: activityTitleRef,
+							onTitleChange: setActiveActivityTitle,
+							onCompletedChange: setActiveActivityCompleted,
+							onShowNameHelpChange: setShowNameHelp,
+						},
+
+						attachmentsProps: {
+							show: activeActivityType === "single",
+							attachments: allAttachments,
+							searchResults,
+							linkedIds: tempActivityLinks,
+							searchQuery: linkSearchQuery,
+							isDropdownOpen: isLinkDropdownOpen,
+							dropdownRef: activityLinkDropdownRef,
+							onSearchQueryChange: setLinkSearchQuery,
+							onOpenDropdown: () => setIsLinkDropdownOpen(true),
+							onToggleAttachment: handleInlineNoteToggleForActivity,
+							onOpenNote: handleOpenNoteEditor,
+							onOpenProject: handleOpenProjectEditor,
+						},
+					};
+
+					const recurrenceEditorProps = {
+						isMultiRecurring,
+						startTime: activeActivityStartTime,
+						endTime: activeActivityEndTime,
+						intervalStart: activeActivityIntervalStart,
+						intervalEnd: activeActivityIntervalEnd,
+
+						pattern: activeActivityRecurrencePattern,
+						interval: activeActivityRecurrenceInterval,
+						unit: activeActivityRecurrenceUnit,
+						days: activeActivityRecurrenceDays,
+						weeks: activeActivityRecurrenceWeeks,
+
+						multiDefs: activeActivityMultiDefs,
+
+						currentInstances: currentRecurrenceInstances,
+						sortedInstances: sortedInstancesForEditor,
+						sourceTotals: sourceTotalsEditor,
+
+						recurrenceNeedsUpdate,
+
+						editingInstanceId,
+						instanceEditData,
+						activeActivityTitle,
+						sharedNotes,
+
+						showNameHelp,
+						nameHelpRef,
+						activeInstanceTextareaRef,
+
+						onStartTimeChange: setActiveActivityStartTime,
+						onEndTimeChange: setActiveActivityEndTime,
+						onIntervalStartChange: setActiveActivityIntervalStart,
+						onIntervalEndChange: setActiveActivityIntervalEnd,
+
+						onPatternChange: handleRecurrencePatternChange,
+						onIntervalChange: setActiveActivityRecurrenceInterval,
+						onUnitChange: setActiveActivityRecurrenceUnit,
+						onToggleDay: toggleRecurrenceDay,
+						onToggleWeek: toggleRecurrenceWeek,
+
+						onMultiDefsChange: setActiveActivityMultiDefs,
+						onShowNameHelpChange: setShowNameHelp,
+
+						onRegenerate: handleManualRegeneration,
+						onRevertChanges: handleRevertRecurrenceChanges,
+
+						onToggleComplete: toggleRecurrenceInstanceComplete,
+						onEditDataChange: setInstanceEditData,
+						onSaveEdit: saveEditingInstance,
+						onCancelEdit: cancelEditingInstance,
+						onStartEdit: startEditingInstance,
+						onRestore: restoreRecurrenceInstance,
+						onToggleSuppression: toggleRecurrenceInstanceSuppression,
+						onOpenNote: handleOpenNoteEditor,
+					};
+
 					return (
 						<ActivityEditorModal
-							isOpen={isActivityEditorOpen}
-							onClose={() => setIsActivityEditorOpen(false)}
-							contentRef={activityEditorRef}
-							zIndexStyle={{ zIndex: editorZIndices.activity }}
-							body={(isRecurring || isMultiRecurring) ? (
-								<RecurrenceEditor
-									isMultiRecurring={isMultiRecurring}
-									startTime={activeActivityStartTime}
-									endTime={activeActivityEndTime}
-									intervalStart={activeActivityIntervalStart}
-									intervalEnd={activeActivityIntervalEnd}
-									pattern={activeActivityRecurrencePattern}
-									interval={activeActivityRecurrenceInterval}
-									unit={activeActivityRecurrenceUnit}
-									days={activeActivityRecurrenceDays}
-									weeks={activeActivityRecurrenceWeeks}
-									multiDefs={activeActivityMultiDefs}
-									currentInstances={currentRecurrenceInstances}
-									sortedInstances={sortedInstancesForEditor}
-									sourceTotals={sourceTotalsEditor}
-									recurrenceNeedsUpdate={recurrenceNeedsUpdate}
-									editingInstanceId={editingInstanceId}
-									instanceEditData={instanceEditData}
-									activeActivityTitle={activeActivityTitle}
-									sharedNotes={sharedNotes}
-									showNameHelp={showNameHelp}
-									nameHelpRef={nameHelpRef}
-									activeInstanceTextareaRef={activeInstanceTextareaRef}
-									onStartTimeChange={setActiveActivityStartTime}
-									onEndTimeChange={setActiveActivityEndTime}
-									onIntervalStartChange={setActiveActivityIntervalStart}
-									onIntervalEndChange={setActiveActivityIntervalEnd}
-									onPatternChange={handleRecurrencePatternChange}
-									onIntervalChange={setActiveActivityRecurrenceInterval}
-									onUnitChange={setActiveActivityRecurrenceUnit}
-									onToggleDay={toggleRecurrenceDay}
-									onToggleWeek={toggleRecurrenceWeek}
-									onMultiDefsChange={setActiveActivityMultiDefs}
-									onShowNameHelpChange={setShowNameHelp}
-									onRegenerate={handleManualRegeneration}
-									onRevertChanges={handleRevertRecurrenceChanges}
-									onToggleComplete={toggleRecurrenceInstanceComplete}
-									onEditDataChange={setInstanceEditData}
-									onSaveEdit={saveEditingInstance}
-									onCancelEdit={cancelEditingInstance}
-									onStartEdit={startEditingInstance}
-									onRestore={restoreRecurrenceInstance}
-									onToggleSuppression={toggleRecurrenceInstanceSuppression}
-									onOpenNote={handleOpenNoteEditor}
-								/>
-							) : <SingleActivityDateFields
-								startDate={activeActivityStart}
-								endDate={activeActivityEnd}
-								startTime={activeActivityStartTime}
-								endTime={activeActivityEndTime}
-								onStartDateChange={setActiveActivityStart}
-								onEndDateChange={setActiveActivityEnd}
-								onStartTimeChange={setActiveActivityStartTime}
-								onEndTimeChange={setActiveActivityEndTime}
-							/>}
-							headerProps={{
-								activityType: activeActivityType,
-								multiDefs: activeActivityMultiDefs,
-								hasChanges,
-								onActivityTypeChange: setActiveActivityType,
-								onMultiDefsChange: setActiveActivityMultiDefs,
-								onSave: handleSaveActivity,
-							}}
-							basicFieldsProps={{
-								title: activeActivityTitle,
-								completed: activeActivityCompleted,
-								showNameHelp,
-								nameHelpRef,
-								titleRef: activityTitleRef,
-								onTitleChange: setActiveActivityTitle,
-								onCompletedChange: setActiveActivityCompleted,
-								onShowNameHelpChange: setShowNameHelp,
-							}}
-							attachmentsProps={{
-								show: activeActivityType === "single",
-								attachments: allAttachments,
-								searchResults,
-								linkedIds: tempActivityLinks,
-								searchQuery: linkSearchQuery,
-								isDropdownOpen: isLinkDropdownOpen,
-								dropdownRef: activityLinkDropdownRef,
-								onSearchQueryChange: setLinkSearchQuery,
-								onOpenDropdown: () => setIsLinkDropdownOpen(true),
-								onToggleAttachment: handleInlineNoteToggleForActivity,
-								onOpenNote: handleOpenNoteEditor,
-								onOpenProject: handleOpenProjectEditor,
-							}}
+							{...activityEditorModalProps}
+							body={
+								(isRecurring || isMultiRecurring) ? (
+									<RecurrenceEditor {...recurrenceEditorProps} />
+								) : (
+									<SingleActivityDateFields
+										startDate={activeActivityStart}
+										endDate={activeActivityEnd}
+										startTime={activeActivityStartTime}
+										endTime={activeActivityEndTime}
+										onStartDateChange={setActiveActivityStart}
+										onEndDateChange={setActiveActivityEnd}
+										onStartTimeChange={setActiveActivityStartTime}
+										onEndTimeChange={setActiveActivityEndTime}
+									/>
+								)
+							}
 						/>
 					);
 				})()}
