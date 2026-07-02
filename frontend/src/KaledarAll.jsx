@@ -18,7 +18,7 @@ import { ActivityAttachments } from './components/events/activity-editor/Activit
 import { SingleActivityDateFields } from './components/events/activity-editor/recurrence/SingleActivityDateFields';
 import { RecurrenceEditor } from './components/events/activity-editor/recurrence/RecurrenceEditor';
 import { ActivityEditorModal } from './components/events/activity-editor/ActivityEditorModal';
-import { ActivityEditorRenderer } from './components/events/activity-editor/ActivityEditorRenderer';
+import { ActivityEditorRenderer } from './components/events/activity-editor/ActivityEditorRenderer.tsx';
 import { exportToCSV, importFromCSV } from './utils/exportImportUtils';
 
 // const RecursiveItem = () => { return null; }; Tohle asi prijde smazat, protoze tomu bro nerozumim 
@@ -3008,7 +3008,6 @@ export default function KalendarApp() {
 					activeActivityRecurrenceWeeks={activeActivityRecurrenceWeeks}
 					activeActivityMultiDefs={activeActivityMultiDefs}
 					tempStatusChanges={tempStatusChanges}
-					areSetsEqual={areSetsEqual}
 					editorZIndices={editorZIndices}
 					activityEditorRef={activityEditorRef}
 					setIsActivityEditorOpen={setIsActivityEditorOpen}

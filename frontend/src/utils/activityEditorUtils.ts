@@ -1,4 +1,4 @@
-import type { CalendarItem } from "../../../shared/types";
+import type { CalendarItem, Id } from "../../../shared/types";
 import { areSetsEqual } from "./commonUtils";
 
 type ActivityEditorState = {
@@ -124,7 +124,7 @@ type BuildActivityAttachmentsParams = {
   sharedNotes: Record<string, any>;
   events: any[];
   linkSearchQuery: string;
-  tempActivityLinks: Set<string>;
+  tempActivityLinks: Set<Id>;
 };
 
 export const buildActivityAttachments = ({
