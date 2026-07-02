@@ -1,61 +1,112 @@
-type ActivityStateForSingleDateFields = {
+import type { RefObject } from "react";
+
+import type {
+  Id,
+  MultiRecurringDefinition,
+  Note,
+  RecurrenceInstance,
+  RecurrencePattern,
+  RecurrenceUnit,
+  WeekParity,
+} from "../../../../../../shared/types";
+
+type ActivityType = "single" | "recurring" | "multi_recurring";
+
+export type ActivityEditorState = {
+  id: Id | null;
+  title: string;
   start: string;
   end: string;
   startTime: string;
   endTime: string;
+  completed: boolean;
+  type: ActivityType;
+
+  intervalStart: string;
+  intervalEnd: string;
+  recurrencePattern: RecurrencePattern;
+  recurrenceInterval: number;
+  recurrenceUnit: RecurrenceUnit;
+  recurrenceDays: number[];
+  recurrenceWeeks: WeekParity[];
+  multiDefs: MultiRecurringDefinition[];
 };
 
-type ActivitySettersForSingleDateFields = {
+export type ActivityEditorSetters = {
+  setTitle: (value: string) => void;
   setStart: (value: string) => void;
   setEnd: (value: string) => void;
   setStartTime: (value: string) => void;
   setEndTime: (value: string) => void;
+  setCompleted: (value: boolean) => void;
+  setType: (value: ActivityType) => void;
+  setIntervalStart: (value: string) => void;
+  setIntervalEnd: (value: string) => void;
+  setRecurrenceInterval: (value: number) => void;
+  setRecurrenceUnit: (value: RecurrenceUnit) => void;
+  setMultiDefs: (value: MultiRecurringDefinition[]) => void;
+};
+
+export type InstanceEditData = {
+  title: string;
+  date: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+};
+
+type AttachmentItem = {
+  id: Id;
+  title: string;
+  _type: "note" | "project";
+  isSuppressed?: boolean;
 };
 
 export const buildSingleActivityDateFieldsProps = (
-  activityState: ActivityStateForSingleDateFields,
-  activitySetters: ActivitySettersForSingleDateFields
-) => {
-  return {
-    startDate: activityState.start,
-    endDate: activityState.end,
-    startTime: activityState.startTime,
-    endTime: activityState.endTime,
-    onStartDateChange: activitySetters.setStart,
-    onEndDateChange: activitySetters.setEnd,
-    onStartTimeChange: activitySetters.setStartTime,
-    onEndTimeChange: activitySetters.setEndTime,
-  };
-};
+  activityState: Pick<ActivityEditorState, "start" | "end" | "startTime" | "endTime">,
+  activitySetters: Pick<
+    ActivityEditorSetters,
+    "setStart" | "setEnd" | "setStartTime" | "setEndTime"
+  >
+) => ({
+  startDate: activityState.start,
+  endDate: activityState.end,
+  startTime: activityState.startTime,
+  endTime: activityState.endTime,
+  onStartDateChange: activitySetters.setStart,
+  onEndDateChange: activitySetters.setEnd,
+  onStartTimeChange: activitySetters.setStartTime,
+  onEndTimeChange: activitySetters.setEndTime,
+});
 
 type BuildActivityEditorModalPropsParams = {
   isActivityEditorOpen: boolean;
   editorZIndices: { activity: number };
-  activityEditorRef: React.RefObject<HTMLDivElement | null>;
+  activityEditorRef: RefObject<HTMLDivElement | null>;
   setIsActivityEditorOpen: (value: boolean) => void;
 
-  activityState: any;
+  activityState: ActivityEditorState;
   hasChanges: boolean;
 
   showNameHelp: boolean;
-  nameHelpRef?: React.RefObject<HTMLDivElement | null>;
-  activityTitleRef?: React.RefObject<HTMLTextAreaElement | null>;
+  nameHelpRef?: RefObject<HTMLDivElement | null>;
+  activityTitleRef?: RefObject<HTMLTextAreaElement | null>;
 
-  activitySetters: any;
+  activitySetters: ActivityEditorSetters;
   setShowNameHelp: (value: boolean) => void;
   handleSaveActivity: () => void;
 
-  allAttachments: any[];
-  searchResults: any[];
-  tempActivityLinks: Set<any>;
+  allAttachments: AttachmentItem[];
+  searchResults: AttachmentItem[];
+  tempActivityLinks: Set<Id>;
   linkSearchQuery: string;
   isLinkDropdownOpen: boolean;
-  activityLinkDropdownRef?: React.RefObject<HTMLDivElement | null>;
+  activityLinkDropdownRef?: RefObject<HTMLDivElement | null>;
   setLinkSearchQuery: (value: string) => void;
   setIsLinkDropdownOpen: (value: boolean) => void;
-  handleInlineNoteToggleForActivity: (...args: any[]) => void;
-  handleOpenNoteEditor: (...args: any[]) => void;
-  handleOpenProjectEditor: (...args: any[]) => void;
+  handleInlineNoteToggleForActivity: (id: Id, shouldLink: boolean) => void;
+  handleOpenNoteEditor: (id: Id) => void;
+  handleOpenProjectEditor: (id: Id) => void;
 };
 
 export const buildActivityEditorModalProps = ({
@@ -125,58 +176,56 @@ export const buildActivityEditorModalProps = ({
 });
 
 type BuildRecurrenceEditorPropsParams = {
-  activityState: any;
-  activitySetters: any;
+  activityState: ActivityEditorState;
+  activitySetters: ActivityEditorSetters;
 
   isMultiRecurring: boolean;
 
-  currentRecurrenceInstances: any[];
-  sortedInstancesForEditor: any[];
+  currentRecurrenceInstances: RecurrenceInstance[];
+  sortedInstancesForEditor: RecurrenceInstance[];
   sourceTotalsEditor: Record<number, number>;
 
   recurrenceNeedsUpdate: boolean;
 
-  editingInstanceId: string | number | null;
-  instanceEditData: any;
-  sharedNotes: any;
+  editingInstanceId: Id | null;
+  instanceEditData: InstanceEditData;
+  sharedNotes: Record<Id, Note>;
   showNameHelp: boolean;
-  nameHelpRef?: React.RefObject<HTMLDivElement | null>;
-  activeInstanceTextareaRef?: React.RefObject<HTMLTextAreaElement | null>;
+  nameHelpRef?: RefObject<HTMLDivElement | null>;
+  activeInstanceTextareaRef?: RefObject<HTMLTextAreaElement | null>;
 
-  handleRecurrencePatternChange: (...args: any[]) => void;
-  toggleRecurrenceDay: (...args: any[]) => void;
-  toggleRecurrenceWeek: (...args: any[]) => void;
+  handleRecurrencePatternChange: (pattern: RecurrencePattern) => void;
+  toggleRecurrenceDay: (dayIndex: number) => void;
+  toggleRecurrenceWeek: (week: WeekParity) => void;
   handleManualRegeneration: () => void;
-  handleRevertRecurrenceChanges: (...args: any[]) => void;
-  toggleRecurrenceInstanceComplete: (...args: any[]) => void;
-  setInstanceEditData: (...args: any[]) => void;
+  handleRevertRecurrenceChanges: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  toggleRecurrenceInstanceComplete: (id: Id) => void;
+  setInstanceEditData: (data: InstanceEditData) => void;
   saveEditingInstance: () => void;
   cancelEditingInstance: () => void;
-  startEditingInstance: (...args: any[]) => void;
-  restoreRecurrenceInstance: (...args: any[]) => void;
-  toggleRecurrenceInstanceSuppression: (...args: any[]) => void;
-  handleOpenNoteEditor: (...args: any[]) => void;
+  startEditingInstance: (instance: RecurrenceInstance) => void;
+  restoreRecurrenceInstance: (
+    event: React.MouseEvent<HTMLButtonElement>,
+    id: Id
+  ) => void;
+  toggleRecurrenceInstanceSuppression: (id: Id) => void;
+  handleOpenNoteEditor: (id: Id) => void;
 };
 
 export const buildRecurrenceEditorProps = ({
   activityState,
   activitySetters,
-
   isMultiRecurring,
-
   currentRecurrenceInstances,
   sortedInstancesForEditor,
   sourceTotalsEditor,
-
   recurrenceNeedsUpdate,
-
   editingInstanceId,
   instanceEditData,
   sharedNotes,
   showNameHelp,
   nameHelpRef,
   activeInstanceTextareaRef,
-
   handleRecurrencePatternChange,
   toggleRecurrenceDay,
   toggleRecurrenceWeek,
@@ -233,7 +282,7 @@ export const buildRecurrenceEditorProps = ({
   onToggleWeek: toggleRecurrenceWeek,
 
   onMultiDefsChange: activitySetters.setMultiDefs,
-  onShowNameHelpChange: activitySetters.setShowNameHelp ?? (() => { }),
+  onShowNameHelpChange: () => { },
 
   onRegenerate: handleManualRegeneration,
   onRevertChanges: handleRevertRecurrenceChanges,

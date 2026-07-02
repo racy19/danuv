@@ -6,6 +6,9 @@ import type {
     MultiRecurringDefinition,
     Note,
     RecurrenceInstance,
+    RecurrencePattern,
+    RecurrenceUnit,
+    WeekParity,
 } from "../../../../../shared/types";
 
 import { ActivityEditorModal } from "./ActivityEditorModal";
@@ -20,6 +23,7 @@ import {
     buildActivityEditorModalProps,
     buildRecurrenceEditorProps,
     buildSingleActivityDateFieldsProps,
+    InstanceEditData,
 } from "./hooks/useActivityEditorProps";
 
 type ActivityState = {
@@ -34,11 +38,11 @@ type ActivityState = {
 
     intervalStart: string;
     intervalEnd: string;
-    recurrencePattern: string;
+    recurrencePattern: RecurrencePattern;
     recurrenceInterval: number;
-    recurrenceUnit: string;
+    recurrenceUnit: RecurrenceUnit;
     recurrenceDays: number[];
-    recurrenceWeeks: string[];
+    recurrenceWeeks: WeekParity[];
     multiDefs: MultiRecurringDefinition[];
 };
 
@@ -53,16 +57,8 @@ type ActivitySetters = {
     setIntervalStart: (value: string) => void;
     setIntervalEnd: (value: string) => void;
     setRecurrenceInterval: (value: number) => void;
-    setRecurrenceUnit: (value: string) => void;
+    setRecurrenceUnit: (value: RecurrenceUnit) => void;
     setMultiDefs: (value: MultiRecurringDefinition[]) => void;
-};
-
-type InstanceEditData = {
-    title: string;
-    date: string;
-    endDate: string;
-    startTime: string;
-    endTime: string;
 };
 
 type ActivityEditorRendererProps = {

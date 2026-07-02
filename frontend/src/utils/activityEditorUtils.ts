@@ -1,4 +1,13 @@
-import type { CalendarItem, Id } from "../../../shared/types";
+import type {
+  CalendarItem,
+  Id,
+  MultiRecurringDefinition,
+  Note,
+  RecurrenceInstance,
+  RecurrencePattern,
+  RecurrenceUnit,
+  WeekParity,
+} from "../../../shared/types";
 import { areSetsEqual } from "./commonUtils";
 
 type ActivityEditorState = {
@@ -8,37 +17,37 @@ type ActivityEditorState = {
   startTime: string;
   endTime: string;
   completed: boolean;
-  type: string;
+  type: "single" | "recurring" | "multi_recurring";
 
   intervalStart: string;
   intervalEnd: string;
-  recurrencePattern: string;
+  recurrencePattern: RecurrencePattern;
   recurrenceInterval: number;
-  recurrenceUnit: string;
+  recurrenceUnit: RecurrenceUnit;
   recurrenceDays: number[];
-  recurrenceWeeks: string[];
-  multiDefs: unknown[];
+  recurrenceWeeks: WeekParity[];
+  multiDefs: MultiRecurringDefinition[];
+};
+
+type EditableActivityItem = CalendarItem & {
+  activityType?: "single" | "recurring" | "multi_recurring";
+  intervalStart?: string;
+  intervalEnd?: string;
+  recurrencePattern?: RecurrencePattern;
+  recurrenceInterval?: number;
+  recurrenceUnit?: RecurrenceUnit;
+  recurrenceDays?: number[];
+  recurrenceWeeks?: WeekParity[];
+  recurrenceInstances?: RecurrenceInstance[];
+  multiDefs?: MultiRecurringDefinition[];
 };
 
 type ComputeActivityHasChangesParams = {
   activityState: ActivityEditorState;
   originalActivity: EditableActivityItem | null;
-  tempActivityLinks: Set<string | number>;
-  tempStatusChanges: Record<string | number, unknown>;
-  currentRecurrenceInstances: unknown[];
-};
-
-type EditableActivityItem = CalendarItem & {
-  activityType?: string;
-  intervalStart?: string;
-  intervalEnd?: string;
-  recurrencePattern?: string;
-  recurrenceInterval?: number;
-  recurrenceUnit?: string;
-  recurrenceDays?: number[];
-  recurrenceWeeks?: string[];
-  recurrenceInstances?: unknown[];
-  multiDefs?: unknown[];
+  tempActivityLinks: Set<Id>;
+  tempStatusChanges: Record<Id, unknown>;
+  currentRecurrenceInstances: RecurrenceInstance[];
 };
 
 export const computeActivityHasChanges = ({
@@ -52,12 +61,9 @@ export const computeActivityHasChanges = ({
     originalActivity ? originalActivity.linkedNoteIds || [] : []
   );
 
-  const originalInstancesStr = JSON.stringify(
-    originalActivity ? originalActivity.recurrenceInstances || [] : []
-  );
-
-  const currentInstancesStr = JSON.stringify(currentRecurrenceInstances);
-  const instancesChanged = originalInstancesStr !== currentInstancesStr;
+  const instancesChanged =
+    JSON.stringify(originalActivity?.recurrenceInstances || []) !==
+    JSON.stringify(currentRecurrenceInstances);
 
   const isNewActivity = !originalActivity;
 
@@ -107,7 +113,7 @@ export const computeActivityHasChanges = ({
       (activityState.type === "multi_recurring" &&
         (!!activityState.intervalStart ||
           !!activityState.intervalEnd ||
-          activityState.multiDefs.some((definition: any) =>
+          activityState.multiDefs.some((definition) =>
             Boolean(
               definition.title ||
               definition.startTime ||
@@ -120,9 +126,22 @@ export const computeActivityHasChanges = ({
   return baseChanges || recurringChanges;
 };
 
+type ProjectAttachmentItem = CalendarItem & {
+  type: "project";
+  _type: "project";
+};
+
+type NoteAttachmentItem = Note & {
+  _type: "note";
+};
+
+export type ActivityAttachmentItem =
+  | ProjectAttachmentItem
+  | NoteAttachmentItem;
+
 type BuildActivityAttachmentsParams = {
-  sharedNotes: Record<string, any>;
-  events: any[];
+  sharedNotes: Record<Id, Note>;
+  events: CalendarItem[];
   linkSearchQuery: string;
   tempActivityLinks: Set<Id>;
 };
@@ -132,48 +151,49 @@ export const buildActivityAttachments = ({
   events,
   linkSearchQuery,
   tempActivityLinks,
-}: BuildActivityAttachmentsParams) => {
-  const noteResults = Object.values(sharedNotes)
-    .filter((note: any) =>
-      note.title.toLowerCase().includes(linkSearchQuery.toLowerCase())
-    )
-    .map((note: any) => ({
+}: BuildActivityAttachmentsParams): {
+  searchResults: ActivityAttachmentItem[];
+  allAttachments: ActivityAttachmentItem[];
+} => {
+  const normalizedQuery = linkSearchQuery.toLowerCase();
+
+  const noteResults: ActivityAttachmentItem[] = Object.values(sharedNotes)
+    .filter((note) => note.title.toLowerCase().includes(normalizedQuery))
+    .map((note) => ({
       ...note,
       _type: "note",
     }));
 
-  const projectResults = events
-    .filter(
-      (event: any) =>
+  const projectResults: ActivityAttachmentItem[] = events
+    .filter((event): event is CalendarItem & { type: "project" } => {
+      return (
         event.type === "project" &&
-        event.title
-          .toLowerCase()
-          .includes(linkSearchQuery.toLowerCase())
-    )
-    .map((project: any) => ({
+        event.title.toLowerCase().includes(normalizedQuery)
+      );
+    })
+    .map((project) => ({
       ...project,
       _type: "project",
     }));
 
-  const searchResults = [...noteResults, ...projectResults];
-
   const allAttachments = Array.from(tempActivityLinks)
-    .map((id) => {
+    .map((id): ActivityAttachmentItem | null => {
       const note = sharedNotes[id];
       if (note) return { ...note, _type: "note" };
 
       const project = events.find(
-        (event: any) => event.id === id && event.type === "project"
+        (event): event is CalendarItem & { type: "project" } =>
+          event.id === id && event.type === "project"
       );
 
       if (project) return { ...project, _type: "project" };
 
       return null;
     })
-    .filter(Boolean);
+    .filter((item): item is ActivityAttachmentItem => Boolean(item));
 
   return {
-    searchResults,
+    searchResults: [...noteResults, ...projectResults],
     allAttachments,
   };
 };
